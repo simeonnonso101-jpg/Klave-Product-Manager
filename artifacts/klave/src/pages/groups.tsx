@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useListGroups } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { Search, Users, Plus, Star, Building2, TrendingUp } from "lucide-react";
@@ -15,11 +16,33 @@ import defaultImg3 from "../assets/real-estate-3.png";
 
 export default function GroupsPage() {
   const { data: groups, isLoading } = useListGroups();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   const getFallbackImage = (id: number) => {
     const images = [defaultImg1, defaultImg2, defaultImg3];
     return images[id % images.length];
   };
+
+  const filteredGroups = groups?.filter((group) => {
+    const q = searchQuery.toLowerCase();
+    const matchesSearch = !q || 
+      group.name.toLowerCase().includes(q) || 
+      (group.subject && group.subject.toLowerCase().includes(q)) || 
+      (group.description && group.description.toLowerCase().includes(q));
+      
+    const matchesCategory = !activeCategory || 
+      (group.subject && group.subject.toLowerCase().includes(activeCategory.toLowerCase()));
+
+    return matchesSearch && matchesCategory;
+  });
+
+  const categories = [
+    { label: "Real Estate", icon: <Building2 className="w-3.5 h-3.5 mr-1.5" /> },
+    { label: "Investing", icon: <TrendingUp className="w-3.5 h-3.5 mr-1.5" /> },
+    { label: "Wholesaling", icon: null },
+    { label: "Property Mgmt", icon: null }
+  ];
 
   return (
     <MainLayout>
@@ -36,6 +59,8 @@ export default function GroupsPage() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground" />
             <Input 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Find real estate courses, investing strategies..." 
               className="pl-10 bg-background text-foreground border-none focus-visible:ring-0 rounded-xl h-10 shadow-inner"
             />
@@ -45,18 +70,20 @@ export default function GroupsPage() {
         <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-20 bg-background">
           {/* Categories row */}
           <div className="flex overflow-x-auto gap-2 pb-2 -mx-4 px-4 scrollbar-hide">
-            <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 text-sm whitespace-nowrap cursor-pointer">
-              <Building2 className="w-3.5 h-3.5 mr-1.5" /> Real Estate
-            </Badge>
-            <Badge variant="outline" className="px-3 py-1.5 text-sm whitespace-nowrap cursor-pointer">
-              <TrendingUp className="w-3.5 h-3.5 mr-1.5" /> Investing
-            </Badge>
-            <Badge variant="outline" className="px-3 py-1.5 text-sm whitespace-nowrap cursor-pointer">
-              Wholesaling
-            </Badge>
-            <Badge variant="outline" className="px-3 py-1.5 text-sm whitespace-nowrap cursor-pointer">
-              Property Mgmt
-            </Badge>
+            {categories.map((cat) => (
+              <Badge 
+                key={cat.label}
+                variant={activeCategory === cat.label ? "secondary" : "outline"} 
+                className={`px-3 py-1.5 text-sm whitespace-nowrap cursor-pointer transition-colors ${
+                  activeCategory === cat.label 
+                    ? "bg-primary/10 text-primary hover:bg-primary/20 border-transparent" 
+                    : "hover:bg-muted"
+                }`}
+                onClick={() => setActiveCategory(activeCategory === cat.label ? null : cat.label)}
+              >
+                {cat.icon} {cat.label}
+              </Badge>
+            ))}
           </div>
 
           <section>
@@ -74,14 +101,14 @@ export default function GroupsPage() {
                     </CardContent>
                   </Card>
                 ))
-              ) : groups?.length === 0 ? (
+              ) : filteredGroups?.length === 0 ? (
                 <div className="col-span-full py-12 text-center bg-card rounded-2xl border border-border shadow-sm">
                   <Building2 className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
                   <h3 className="font-medium text-foreground">No courses found</h3>
-                  <p className="text-sm text-muted-foreground mt-1">Be the first to create a property investing class.</p>
+                  <p className="text-sm text-muted-foreground mt-1">Try adjusting your search or selected category.</p>
                 </div>
               ) : (
-                groups?.map((group) => (
+                filteredGroups?.map((group) => (
                   <Link key={group.id} href={`/groups/${group.id}`}>
                     <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow overflow-hidden group cursor-pointer h-full flex flex-col rounded-2xl">
                       <div className="h-36 bg-muted relative overflow-hidden">

@@ -36,13 +36,16 @@ router.get("/groups", async (req, res): Promise<void> => {
     res.status(400).json({ error: query.error.message });
     return;
   }
-  let dbQuery = db.select().from(groupsTable);
   const conditions = [];
   if (query.data.creatorId != null) {
     conditions.push(eq(groupsTable.creatorId, query.data.creatorId));
   }
   if (query.data.type != null) {
     conditions.push(eq(groupsTable.type, query.data.type));
+  }
+  if ((query.data as any).memberId != null) {
+    const memberId = (query.data as any).memberId as number;
+    conditions.push(sql`${groupsTable.id} IN (SELECT group_id FROM group_members WHERE user_id = ${memberId})`);
   }
   const groups = conditions.length > 0
     ? await db.select().from(groupsTable).where(sql`${conditions.map((c) => sql`(${c})`).reduce((a, b) => sql`${a} AND ${b}`)}`)

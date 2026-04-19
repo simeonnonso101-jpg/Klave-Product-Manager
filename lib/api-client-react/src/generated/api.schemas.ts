@@ -379,6 +379,15 @@ export interface CreatorDashboard {
   replicationJobs: ReplicationJob[];
 }
 
+export type UpdateCurrentUserBody = {
+  /** @minLength 1 */
+  name?: string;
+  /** @nullable */
+  bio?: string | null;
+  /** @nullable */
+  avatarUrl?: string | null;
+};
+
 export type ListGroupsParams = {
   /**
    * @nullable
@@ -388,6 +397,10 @@ export type ListGroupsParams = {
    * @nullable
    */
   type?: ListGroupsType;
+  /**
+   * @nullable
+   */
+  memberId?: number | null;
 };
 
 export type ListGroupsType =

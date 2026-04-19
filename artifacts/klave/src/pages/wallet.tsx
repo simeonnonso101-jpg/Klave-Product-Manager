@@ -30,25 +30,32 @@ export default function WalletPage() {
   const withdraw = useWithdrawFunds();
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
-  const [bankDetails, setBankDetails] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
 
   const handleWithdraw = (e: React.FormEvent) => {
     e.preventDefault();
     const amount = parseFloat(withdrawAmount);
-    if (isNaN(amount) || amount <= 0) return;
+    const balance = summary?.availableBalance || 0;
+    
+    if (isNaN(amount) || amount <= 0 || amount > balance) {
+      toast({ title: "Invalid amount", description: "Please enter a valid withdrawal amount.", variant: "destructive" });
+      return;
+    }
     
     withdraw.mutate({
       data: {
         userId,
         amount,
-        bankDetails
+        bankDetails: `${bankName} - ${accountNumber}`
       }
     }, {
       onSuccess: () => {
         toast({ title: "Withdrawal initiated", description: "Your funds will arrive in 2-3 business days." });
         setIsWithdrawOpen(false);
         setWithdrawAmount("");
-        setBankDetails("");
+        setBankName("");
+        setAccountNumber("");
         queryClient.invalidateQueries({ queryKey: getGetWalletSummaryQueryKey({ creatorId: userId }) });
         queryClient.invalidateQueries({ queryKey: getListTransactionsQueryKey({ userId }) });
       },
@@ -121,19 +128,30 @@ export default function WalletPage() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="bank" className="font-semibold">Bank Details (Routing / Account)</Label>
+                          <Label htmlFor="bankName" className="font-semibold">Bank Name</Label>
                           <Input 
-                            id="bank" 
-                            placeholder="e.g. Chase Business ..." 
-                            value={bankDetails}
-                            onChange={(e) => setBankDetails(e.target.value)}
+                            id="bankName" 
+                            placeholder="e.g. Chase Business" 
+                            value={bankName}
+                            onChange={(e) => setBankName(e.target.value)}
                             required 
                             className="h-12 rounded-xl"
                           />
                         </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="accountNumber" className="font-semibold">Account Number</Label>
+                          <Input 
+                            id="accountNumber" 
+                            placeholder="e.g. 123456789" 
+                            value={accountNumber}
+                            onChange={(e) => setAccountNumber(e.target.value)}
+                            required 
+                            className="h-12 rounded-xl font-mono"
+                          />
+                        </div>
                       </div>
                       <DialogFooter>
-                        <Button type="submit" disabled={withdraw.isPending || !withdrawAmount || !bankDetails} className="h-12 rounded-xl w-full text-base font-bold shadow-md">
+                        <Button type="submit" disabled={withdraw.isPending || !withdrawAmount || !bankName || !accountNumber} className="h-12 rounded-xl w-full text-base font-bold shadow-md">
                           {withdraw.isPending && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
                           Confirm Withdrawal
                         </Button>

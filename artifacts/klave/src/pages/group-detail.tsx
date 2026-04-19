@@ -119,7 +119,7 @@ export default function GroupDetailPage() {
           id: group.id,
           data: { userId: user.id, role: "student" }
         });
-        toast({ title: "Joined group successfully!" });
+        toast({ title: "Joined group successfully!", description: `Welcome to ${group.name}!` });
       }
       
       queryClient.invalidateQueries({ queryKey: getGetGroupQueryKey(group.id) });

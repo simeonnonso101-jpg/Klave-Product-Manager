@@ -13,6 +13,7 @@ import WalletPage from "@/pages/wallet";
 import GrowPage from "@/pages/grow";
 import CreateGroupPage from "@/pages/create-group";
 import GroupDetailPage from "@/pages/group-detail";
+import ProfilePage from "@/pages/profile";
 
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
@@ -184,6 +185,7 @@ function ClerkProviderWithRoutes() {
             <Route path="/groups/:id" component={() => <Protected><GroupDetailPage /></Protected>} />
             <Route path="/wallet" component={() => <Protected><WalletPage /></Protected>} />
             <Route path="/grow" component={() => <Protected><GrowPage /></Protected>} />
+            <Route path="/profile" component={() => <Protected><ProfilePage /></Protected>} />
             <Route component={NotFound} />
           </Switch>
           <Toaster />

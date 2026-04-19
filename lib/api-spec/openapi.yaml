@@ -94,10 +94,35 @@ paths:
     get:
       operationId: getCurrentUser
       tags: [users]
-      summary: Get current user (first user for demo)
+      summary: Get current authenticated user
       responses:
         "200":
           description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    patch:
+      operationId: updateCurrentUser
+      tags: [users]
+      summary: Update current authenticated user's profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                bio:
+                  type: ["string", "null"]
+                avatarUrl:
+                  type: ["string", "null"]
+      responses:
+        "200":
+          description: Updated user
           content:
             application/json:
               schema:
@@ -118,6 +143,10 @@ paths:
           schema:
             type: ["string", "null"]
             enum: ["class", "personal", null]
+        - name: memberId
+          in: query
+          schema:
+            type: ["integer", "null"]
       responses:
         "200":
           description: List of groups

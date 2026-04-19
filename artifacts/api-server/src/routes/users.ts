@@ -55,6 +55,27 @@ router.get("/users/me", async (req, res): Promise<void> => {
   res.json(GetCurrentUserResponse.parse({ ...user, walletBalance: parseFloat(user.walletBalance ?? "0"), avatarUrl: user.avatarUrl ?? null, bio: user.bio ?? null }));
 });
 
+router.patch("/users/me", async (req, res): Promise<void> => {
+  const auth = getAuth(req);
+  const clerkUserId = auth?.userId;
+  if (!clerkUserId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  const body = req.body as { name?: string; bio?: string | null; avatarUrl?: string | null };
+  const updates: { name?: string; bio?: string | null; avatarUrl?: string | null } = {};
+  if (typeof body.name === "string" && body.name.trim().length > 0) updates.name = body.name.trim();
+  if (body.bio !== undefined) updates.bio = body.bio;
+  if (body.avatarUrl !== undefined) updates.avatarUrl = body.avatarUrl;
+
+  const [user] = await db.update(usersTable).set(updates).where(eq(usersTable.clerkUserId, clerkUserId)).returning();
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+  res.json(GetCurrentUserResponse.parse({ ...user, walletBalance: parseFloat(user.walletBalance ?? "0"), avatarUrl: user.avatarUrl ?? null, bio: user.bio ?? null }));
+});
+
 router.get("/users/:id", async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const params = GetUserParams.safeParse({ id: raw });

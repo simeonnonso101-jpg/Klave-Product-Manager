@@ -60,9 +60,30 @@ export const GetUserResponse = zod.object({
 });
 
 /**
- * @summary Get current user (first user for demo)
+ * @summary Get current authenticated user
  */
 export const GetCurrentUserResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  email: zod.string(),
+  role: zod.enum(["creator", "student"]),
+  avatarUrl: zod.string().nullish(),
+  bio: zod.string().nullish(),
+  walletBalance: zod.number(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Update current authenticated user's profile
+ */
+
+export const UpdateCurrentUserBody = zod.object({
+  name: zod.string().min(1).optional(),
+  bio: zod.string().nullish(),
+  avatarUrl: zod.string().nullish(),
+});
+
+export const UpdateCurrentUserResponse = zod.object({
   id: zod.number(),
   name: zod.string(),
   email: zod.string(),
@@ -81,6 +102,7 @@ export const ListGroupsQueryParams = zod.object({
   type: zod
     .union([zod.literal("class"), zod.literal("personal"), zod.literal(null)])
     .nullish(),
+  memberId: zod.coerce.number().nullish(),
 });
 
 export const ListGroupsResponseItem = zod.object({

@@ -1,5 +1,5 @@
-import { useGetGroup, useListMessages, useSendMessage, useDeleteMessage, useReplicateLecture, useListGroups, useGetCurrentUser, getListMessagesQueryKey, getListReplicationJobsQueryKey } from "@workspace/api-client-react";
-import { useParams, Link } from "wouter";
+import { useGetGroup, useGetGroupStats, useListMessages, useSendMessage, useDeleteMessage, useReplicateLecture, useListGroups, useGetCurrentUser, getListMessagesQueryKey, getListReplicationJobsQueryKey } from "@workspace/api-client-react";
+import { useParams, Link, useLocation } from "wouter";
 import { ArrowLeft, Send, Sparkles, Image as ImageIcon, Trash2, Copy, Loader2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,10 +22,14 @@ export default function ChatViewPage() {
     query: { enabled: !!groupId } 
   });
   
+  const { data: stats } = useGetGroupStats(groupId, { query: { enabled: !!groupId } });
+  
   const { data: messages, isLoading: isLoadingMessages } = useListMessages(
     { groupId, limit: 100 },
     { query: { enabled: !!groupId, refetchInterval: 3000 } }
   );
+  
+  const [, setLocation] = useLocation();
 
   const { data: groups } = useListGroups({ creatorId: user?.id }, { query: { enabled: !!user } });
 
@@ -119,10 +123,10 @@ export default function ChatViewPage() {
       
       <header className="h-[68px] flex items-center justify-between px-2 bg-card shadow-sm z-20 shrink-0">
         <div className="flex items-center gap-2">
-          <Link href="/" className="p-2 rounded-full hover:bg-muted text-foreground transition-colors flex items-center">
+          <Link href="/chats" className="p-2 rounded-full hover:bg-muted text-foreground transition-colors flex items-center">
             <ArrowLeft className="h-5 w-5" />
           </Link>
-          <Link href={`/groups/${group.id}`} className="flex items-center gap-3 cursor-pointer p-1 rounded-xl hover:bg-muted transition-colors">
+          <div onClick={() => setLocation(`/groups/${group.id}`)} className="flex items-center gap-3 cursor-pointer p-1 rounded-xl hover:bg-muted transition-colors">
             <Avatar className="h-10 w-10 border border-border">
               <AvatarImage src={group.coverImageUrl || undefined} />
               <AvatarFallback className="bg-primary/20 text-primary">{group.name.charAt(0)}</AvatarFallback>
@@ -130,10 +134,10 @@ export default function ChatViewPage() {
             <div className="flex flex-col">
               <h2 className="text-base font-semibold leading-tight">{group.name}</h2>
               <span className="text-xs text-muted-foreground mt-0.5">
-                {group.memberCount} members • {group.price ? `$${group.price}` : 'Free'}
+                {stats?.memberCount || group.memberCount || 1} members • {group.price ? `$${group.price}` : 'Free'}
               </span>
             </div>
-          </Link>
+          </div>
         </div>
         {isCreator && (
           <Button variant="ghost" size="icon" className="text-primary hover:text-primary hover:bg-primary/10 mr-2" onClick={() => toast({ title: "AI Replicate", description: "Select a message to replicate it." })}>

@@ -38,6 +38,7 @@ import type {
   ReplicationJob,
   SendMessageBody,
   Transaction,
+  UpdateCurrentUserBody,
   UpdateGroupBody,
   User,
   WalletSummary,
@@ -358,7 +359,7 @@ export function useGetUser<
 }
 
 /**
- * @summary Get current user (first user for demo)
+ * @summary Get current authenticated user
  */
 export const getGetCurrentUserUrl = () => {
   return `/api/users/me`;
@@ -407,7 +408,7 @@ export type GetCurrentUserQueryResult = NonNullable<
 export type GetCurrentUserQueryError = ErrorType<unknown>;
 
 /**
- * @summary Get current user (first user for demo)
+ * @summary Get current authenticated user
  */
 
 export function useGetCurrentUser<
@@ -429,6 +430,92 @@ export function useGetCurrentUser<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Update current authenticated user's profile
+ */
+export const getUpdateCurrentUserUrl = () => {
+  return `/api/users/me`;
+};
+
+export const updateCurrentUser = async (
+  updateCurrentUserBody: UpdateCurrentUserBody,
+  options?: RequestInit,
+): Promise<User> => {
+  return customFetch<User>(getUpdateCurrentUserUrl(), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateCurrentUserBody),
+  });
+};
+
+export const getUpdateCurrentUserMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateCurrentUser>>,
+    TError,
+    { data: BodyType<UpdateCurrentUserBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateCurrentUser>>,
+  TError,
+  { data: BodyType<UpdateCurrentUserBody> },
+  TContext
+> => {
+  const mutationKey = ["updateCurrentUser"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateCurrentUser>>,
+    { data: BodyType<UpdateCurrentUserBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return updateCurrentUser(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateCurrentUserMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateCurrentUser>>
+>;
+export type UpdateCurrentUserMutationBody = BodyType<UpdateCurrentUserBody>;
+export type UpdateCurrentUserMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update current authenticated user's profile
+ */
+export const useUpdateCurrentUser = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateCurrentUser>>,
+    TError,
+    { data: BodyType<UpdateCurrentUserBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateCurrentUser>>,
+  TError,
+  { data: BodyType<UpdateCurrentUserBody> },
+  TContext
+> => {
+  return useMutation(getUpdateCurrentUserMutationOptions(options));
+};
 
 /**
  * @summary List all groups
