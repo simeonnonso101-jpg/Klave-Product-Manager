@@ -19,19 +19,19 @@ export default function ChatViewPage() {
   
   const { data: user } = useGetCurrentUser();
   const { data: group, isLoading: isLoadingGroup } = useGetGroup(groupId, { 
-    query: { enabled: !!groupId } 
+    query: { enabled: !!groupId } as any
   });
   
-  const { data: stats } = useGetGroupStats(groupId, { query: { enabled: !!groupId } });
+  const { data: stats } = useGetGroupStats(groupId, { query: { enabled: !!groupId } as any });
   
   const { data: messages, isLoading: isLoadingMessages } = useListMessages(
     { groupId, limit: 100 },
-    { query: { enabled: !!groupId, refetchInterval: 3000 } }
+    { query: { enabled: !!groupId, refetchInterval: 3000 } as any }
   );
   
   const [, setLocation] = useLocation();
 
-  const { data: groups } = useListGroups({ creatorId: user?.id }, { query: { enabled: !!user } });
+  const { data: groups } = useListGroups({ creatorId: user?.id }, { query: { enabled: !!user } as any });
 
   const sendMessage = useSendMessage();
   const deleteMessage = useDeleteMessage();

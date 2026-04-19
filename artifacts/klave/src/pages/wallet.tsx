@@ -19,12 +19,12 @@ export default function WalletPage() {
   
   const { data: summary, isLoading: isLoadingSummary } = useGetWalletSummary(
     { creatorId: userId }, 
-    { query: { enabled: !!user } }
+    { query: { enabled: !!user } as any }
   );
   
   const { data: transactions, isLoading: isLoadingTx } = useListTransactions(
     { userId },
-    { query: { enabled: !!user } }
+    { query: { enabled: !!user } as any }
   );
 
   const withdraw = useWithdrawFunds();

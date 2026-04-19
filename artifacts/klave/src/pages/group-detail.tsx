@@ -26,14 +26,14 @@ export default function GroupDetailPage() {
   const queryClient = useQueryClient();
   
   const { data: user } = useGetCurrentUser();
-  const { data: group, isLoading: isLoadingGroup } = useGetGroup(groupId, { query: { enabled: !!groupId } });
-  const { data: stats } = useGetGroupStats(groupId, { query: { enabled: !!groupId } });
-  const { data: members, isLoading: isLoadingMembers } = useListGroupMembers(groupId, { query: { enabled: !!groupId } });
+  const { data: group, isLoading: isLoadingGroup } = useGetGroup(groupId, { query: { enabled: !!groupId } as any });
+  const { data: stats } = useGetGroupStats(groupId, { query: { enabled: !!groupId } as any });
+  const { data: members, isLoading: isLoadingMembers } = useListGroupMembers(groupId, { query: { enabled: !!groupId } as any });
   
   const createPayment = useCreatePayment();
   const addMember = useAddGroupMember();
   const updateGroup = useUpdateGroup();
-  const { data: users } = useListUsers({ query: { enabled: !!user } });
+  const { data: users } = useListUsers({ query: { enabled: !!user } as any });
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);

@@ -12,7 +12,7 @@ export default function ChatsPage() {
   const { data: user } = useGetCurrentUser();
   const { data: groups, isLoading } = useListGroups(
     { memberId: user?.id },
-    { query: { enabled: !!user } }
+    { query: { enabled: !!user } as any }
   );
 
   return (

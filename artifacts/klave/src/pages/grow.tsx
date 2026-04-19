@@ -11,12 +11,12 @@ export default function GrowPage() {
   
   const { data: dashboard, isLoading } = useGetCreatorDashboard(
     userId,
-    { query: { enabled: !!user } }
+    { query: { enabled: !!user } as any }
   );
 
   const { data: jobs, isLoading: isJobsLoading } = useListReplicationJobs(
     { creatorId: userId },
-    { query: { enabled: !!user } }
+    { query: { enabled: !!user } as any }
   );
 
   const StatCard = ({ title, value, icon, loading, subtext }: { title: string, value: string | number, icon: React.ReactNode, loading?: boolean, subtext?: string }) => (
