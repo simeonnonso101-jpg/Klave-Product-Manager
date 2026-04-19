@@ -18,6 +18,16 @@ Klave is a chat-first platform enabling creators to teach, sell, and monetize kn
 - **Frontend**: React + Vite + Tailwind CSS + shadcn/ui + Framer Motion
 - **Routing**: Wouter
 
+## Authentication
+
+Klave uses Clerk auth (`@clerk/react` on the client, `@clerk/express` on the server). The Clerk proxy is mounted at `/__clerk` in `app.ts`, with `clerkMiddleware()` enabling cookie-based session reading on every API request. The `/api/users/me` endpoint reads the Clerk session via `getAuth(req)` and lazily creates an app `users` row (linked by `clerk_user_id`) on first sign-in. Routes:
+
+- `/` — Public landing page (signed-out) or auto-redirect to `/chats` (signed-in)
+- `/sign-in`, `/sign-up` — Clerk-rendered, branded with Klave logo and sage palette
+- `/chats`, `/chat/:id`, `/groups`, `/groups/new`, `/groups/:id`, `/wallet`, `/grow` — Protected, requires sign-in
+
+Manage users / login providers / OAuth in the workspace Auth pane (toolbar).
+
 ## Architecture
 
 - `artifacts/api-server` — Express 5 API backend

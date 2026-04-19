@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { getAuth, clerkClient } from "@clerk/express";
 import {
   CreateUserBody,
   GetUserParams,
@@ -22,12 +23,35 @@ router.get("/users", async (_req, res): Promise<void> => {
   res.json(ListUsersResponse.parse(parsed));
 });
 
-router.get("/users/me", async (_req, res): Promise<void> => {
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, 1)).limit(1);
-  if (!user) {
-    res.status(404).json({ error: "User not found" });
+router.get("/users/me", async (req, res): Promise<void> => {
+  const auth = getAuth(req);
+  const clerkUserId = auth?.userId;
+  if (!clerkUserId) {
+    res.status(401).json({ error: "Unauthorized" });
     return;
   }
+
+  let [user] = await db.select().from(usersTable).where(eq(usersTable.clerkUserId, clerkUserId)).limit(1);
+
+  if (!user) {
+    const clerkUser = await clerkClient.users.getUser(clerkUserId);
+    const email = clerkUser.emailAddresses[0]?.emailAddress ?? `${clerkUserId}@klave.local`;
+    const name = [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") || clerkUser.username || email.split("@")[0];
+
+    const existingByEmail = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
+    if (existingByEmail[0]) {
+      [user] = await db.update(usersTable).set({ clerkUserId }).where(eq(usersTable.id, existingByEmail[0].id)).returning();
+    } else {
+      [user] = await db.insert(usersTable).values({
+        clerkUserId,
+        name,
+        email,
+        role: "creator",
+        avatarUrl: clerkUser.imageUrl ?? null,
+      }).returning();
+    }
+  }
+
   res.json(GetCurrentUserResponse.parse({ ...user, walletBalance: parseFloat(user.walletBalance ?? "0"), avatarUrl: user.avatarUrl ?? null, bio: user.bio ?? null }));
 });
 

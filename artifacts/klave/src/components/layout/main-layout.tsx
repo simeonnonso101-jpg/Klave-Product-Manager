@@ -1,14 +1,15 @@
-import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { MessageCircle, Compass, Wallet, TrendingUp } from "lucide-react";
-import { useGetCurrentUser } from "@workspace/api-client-react";
+import { MessageCircle, Compass, Wallet, TrendingUp, LogOut } from "lucide-react";
+import { useClerk, useUser } from "@clerk/react";
+import { Button } from "@/components/ui/button";
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
-  const [location] = useLocation();
-  const { data: user } = useGetCurrentUser();
+  const [location, setLocation] = useLocation();
+  const { signOut } = useClerk();
+  const { user: clerkUser } = useUser();
 
-  // Hide bottom nav on chat view
   const isChatView = location.startsWith("/chat/");
+  const initial = (clerkUser?.firstName?.[0] || clerkUser?.username?.[0] || clerkUser?.primaryEmailAddress?.emailAddress?.[0] || "K").toUpperCase();
   
   return (
     <div className="flex flex-col h-[100dvh] bg-background text-foreground overflow-hidden">
@@ -17,14 +18,24 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       </main>
       
       {!isChatView && (
-        <nav className="fixed bottom-0 w-full bg-white/90 backdrop-blur-xl border-t border-border z-50 pb-safe shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
-          <div className="flex justify-around items-center h-[72px] px-2 max-w-md mx-auto">
-            <NavItem href="/" icon={<MessageCircle className="w-6 h-6" />} label="Chats" active={location === "/"} />
-            <NavItem href="/groups" icon={<Compass className="w-6 h-6" />} label="Discover" active={location === "/groups" || location.startsWith("/groups/new")} />
-            <NavItem href="/wallet" icon={<Wallet className="w-6 h-6" />} label="Wallet" active={location === "/wallet"} />
-            <NavItem href="/grow" icon={<TrendingUp className="w-6 h-6" />} label="Grow" active={location === "/grow"} />
-          </div>
-        </nav>
+        <>
+          <button
+            onClick={async () => { await signOut(); setLocation("/"); }}
+            className="fixed top-3 right-3 z-50 h-9 w-9 rounded-full bg-white/90 backdrop-blur border border-border shadow-sm flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+            title="Sign out"
+            aria-label="Sign out"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+          <nav className="fixed bottom-0 w-full bg-white/90 backdrop-blur-xl border-t border-border z-50 pb-safe shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
+            <div className="flex justify-around items-center h-[72px] px-2 max-w-md mx-auto">
+              <NavItem href="/chats" icon={<MessageCircle className="w-6 h-6" />} label="Chats" active={location === "/chats"} />
+              <NavItem href="/groups" icon={<Compass className="w-6 h-6" />} label="Discover" active={location === "/groups" || location.startsWith("/groups/new")} />
+              <NavItem href="/wallet" icon={<Wallet className="w-6 h-6" />} label="Wallet" active={location === "/wallet"} />
+              <NavItem href="/grow" icon={<TrendingUp className="w-6 h-6" />} label="Grow" active={location === "/grow"} />
+            </div>
+          </nav>
+        </>
       )}
     </div>
   );
