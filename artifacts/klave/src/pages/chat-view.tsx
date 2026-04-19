@@ -93,88 +93,98 @@ export default function ChatViewPage() {
   if (isLoadingGroup) {
     return (
       <div className="flex flex-col h-[100dvh] bg-background">
-        <header className="h-16 border-b border-border flex items-center px-4 gap-3 bg-card/80 backdrop-blur-md">
-          <Skeleton className="h-8 w-8 rounded-full" />
+        <header className="h-16 border-b border-border/50 flex items-center px-4 gap-3 bg-card/90 backdrop-blur-md">
+          <Skeleton className="h-10 w-10 rounded-full" />
           <Skeleton className="h-6 w-32" />
         </header>
         <div className="flex-1 p-4 space-y-4">
-          <Skeleton className="h-12 w-2/3 rounded-2xl rounded-tl-sm" />
-          <Skeleton className="h-16 w-3/4 rounded-2xl rounded-tr-sm self-end ml-auto" />
+          <Skeleton className="h-12 w-2/3 rounded-2xl rounded-tl-none" />
+          <Skeleton className="h-16 w-3/4 rounded-2xl rounded-tr-none self-end ml-auto" />
         </div>
       </div>
     );
   }
 
   if (!group) {
-    return <div className="p-8 text-center text-destructive">Group not found</div>;
+    return <div className="p-8 text-center text-destructive">Class not found</div>;
   }
 
   const isCreator = user?.id === group.creatorId;
   const otherGroups = groups?.filter(g => g.id !== groupId) || [];
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-background relative">
-      <header className="h-16 border-b border-border flex items-center justify-between px-4 sticky top-0 bg-card/80 backdrop-blur-xl z-20">
-        <div className="flex items-center gap-3">
-          <Link href="/" className="p-2 -ml-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
+    <div className="flex flex-col h-[100dvh] bg-[#EFEAE2] relative overflow-hidden">
+      {/* Abstract WhatsApp style background pattern */}
+      <div className="absolute inset-0 opacity-40 pointer-events-none" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%2310b981\" fill-opacity=\"0.1\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')" }}></div>
+      
+      <header className="h-[68px] flex items-center justify-between px-2 bg-card shadow-sm z-20 shrink-0">
+        <div className="flex items-center gap-2">
+          <Link href="/" className="p-2 rounded-full hover:bg-muted text-foreground transition-colors flex items-center">
             <ArrowLeft className="h-5 w-5" />
           </Link>
-          <Link href={`/groups/${group.id}`} className="flex items-center gap-3">
-            <Avatar className="h-8 w-8">
+          <Link href={`/groups/${group.id}`} className="flex items-center gap-3 cursor-pointer p-1 rounded-xl hover:bg-muted transition-colors">
+            <Avatar className="h-10 w-10 border border-border">
               <AvatarImage src={group.coverImageUrl || undefined} />
-              <AvatarFallback>{group.name.charAt(0)}</AvatarFallback>
+              <AvatarFallback className="bg-primary/20 text-primary">{group.name.charAt(0)}</AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
-              <h2 className="text-sm font-semibold leading-none">{group.name}</h2>
-              <span className="text-[10px] text-muted-foreground mt-0.5">
+              <h2 className="text-base font-semibold leading-tight">{group.name}</h2>
+              <span className="text-xs text-muted-foreground mt-0.5">
                 {group.memberCount} members • {group.price ? `$${group.price}` : 'Free'}
               </span>
             </div>
           </Link>
         </div>
         {isCreator && (
-          <Button variant="ghost" size="icon" className="text-primary hover:text-primary hover:bg-primary/10">
-            <Sparkles className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="text-primary hover:text-primary hover:bg-primary/10 mr-2" onClick={() => toast({ title: "AI Replicate", description: "Select a message to replicate it." })}>
+            <Sparkles className="h-5 w-5" />
           </Button>
         )}
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-20">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 relative z-10 pb-20">
         {isLoadingMessages ? (
           <div className="flex justify-center p-4">
-            <div className="animate-pulse flex space-x-2">
-              <div className="w-2 h-2 bg-primary/50 rounded-full"></div>
-              <div className="w-2 h-2 bg-primary/50 rounded-full animation-delay-200"></div>
-              <div className="w-2 h-2 bg-primary/50 rounded-full animation-delay-400"></div>
+            <div className="bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full text-xs text-muted-foreground shadow-sm">
+              Loading messages...
             </div>
           </div>
         ) : messages?.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
-            <Sparkles className="h-12 w-12 mb-2 text-primary" />
-            <p>Start the conversation</p>
+          <div className="h-full flex flex-col items-center justify-center">
+            <div className="bg-card/80 backdrop-blur-md p-6 rounded-2xl shadow-sm text-center max-w-[280px]">
+              <Sparkles className="h-10 w-10 mx-auto mb-3 text-primary opacity-80" />
+              <h3 className="font-semibold text-foreground mb-1">Start the discussion</h3>
+              <p className="text-sm text-muted-foreground">Share property insights, market updates, or course materials here.</p>
+            </div>
           </div>
         ) : (
-          messages?.map((msg) => {
+          messages?.map((msg, idx) => {
             const isMe = msg.senderId === user?.id;
+            const showTail = idx === messages.length - 1 || messages[idx + 1]?.senderId !== msg.senderId;
+            
             return (
               <div key={msg.id} className={`flex gap-2 max-w-[85%] group/msg ${isMe ? "ml-auto flex-row-reverse" : ""}`}>
-                {!isMe && (
-                  <Avatar className="h-6 w-6 shrink-0 mt-auto">
+                {!isMe && showTail && (
+                  <Avatar className="h-8 w-8 shrink-0 mt-auto shadow-sm">
                     <AvatarImage src={msg.sender?.avatarUrl || undefined} />
-                    <AvatarFallback className="text-[10px]">{msg.sender?.name?.charAt(0)}</AvatarFallback>
+                    <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{msg.sender?.name?.charAt(0)}</AvatarFallback>
                   </Avatar>
                 )}
+                {!isMe && !showTail && <div className="w-8 shrink-0" />}
+                
                 <div className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
-                  {!isMe && <span className="text-[10px] text-muted-foreground ml-1 mb-1">{msg.sender?.name}</span>}
+                  {!isMe && (idx === 0 || messages[idx - 1]?.senderId !== msg.senderId) && (
+                    <span className="text-xs font-semibold text-accent ml-2 mb-1 drop-shadow-sm">{msg.sender?.name}</span>
+                  )}
                   
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 relative">
                     {isMe && (
-                      <div className="flex flex-col gap-1 opacity-0 group-hover/msg:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => handleDelete(msg.id)}>
+                      <div className="flex flex-col gap-1 opacity-0 group-hover/msg:opacity-100 transition-opacity absolute right-[calc(100%+8px)] top-1/2 -translate-y-1/2">
+                        <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full bg-background/80 shadow-sm text-muted-foreground hover:text-destructive hover:bg-background" onClick={() => handleDelete(msg.id)}>
                           <Trash2 className="h-3 w-3" />
                         </Button>
                         {isCreator && (
-                          <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-primary" onClick={() => setReplicateMessageId(msg.id)}>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full bg-background/80 shadow-sm text-muted-foreground hover:text-primary hover:bg-background" onClick={() => setReplicateMessageId(msg.id)}>
                             <Copy className="h-3 w-3" />
                           </Button>
                         )}
@@ -182,47 +192,68 @@ export default function ChatViewPage() {
                     )}
                     
                     <div 
-                      className={`px-4 py-2.5 rounded-2xl text-sm ${
+                      className={`px-3 py-2 text-[15px] shadow-sm relative ${
                         isMe 
-                          ? "bg-primary text-primary-foreground rounded-br-sm shadow-md shadow-primary/20" 
-                          : "bg-muted/80 backdrop-blur-sm text-foreground rounded-bl-sm border border-border"
+                          ? "bg-[#D9FDD3] text-[#0A2F1D]" // WhatsApp web light theme green
+                          : "bg-white text-foreground"
+                      } ${
+                        showTail && isMe ? "rounded-l-xl rounded-tr-xl rounded-br-sm" : 
+                        showTail && !isMe ? "rounded-r-xl rounded-tl-xl rounded-bl-sm" : "rounded-xl"
                       }`}
+                      style={{
+                        wordBreak: 'break-word'
+                      }}
                     >
-                      {msg.content}
+                      {/* Tail SVG */}
+                      {showTail && (
+                        <svg viewBox="0 0 8 13" width="8" height="13" className={`absolute bottom-0 ${isMe ? "text-[#D9FDD3] -right-[7px]" : "text-white -left-[7px]"} block drop-shadow-sm`}>
+                          <path opacity="1" fill="currentColor" d={isMe ? "M5.188 1H0v11.193l6.467-8.625C7.526 2.156 6.958 1 5.188 1z" : "M2.812 1H8v11.193L1.533 3.568C.474 2.156 1.042 1 2.812 1z"}></path>
+                        </svg>
+                      )}
+                      
+                      <span className="leading-relaxed">{msg.content}</span>
+                      
+                      <div className="flex justify-end items-center gap-1 mt-1 -mb-1 min-w-[50px]">
+                        <span className="text-[10px] text-black/40 inline-block text-right w-full">
+                          {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        {isMe && (
+                          <svg viewBox="0 0 16 11" width="16" height="11" className="text-blue-500 shrink-0">
+                            <path fill="currentColor" d="M11.83 1.01L10.37.03a.58.58 0 0 0-.82.16L5.43 6.6 3.12 3.84a.58.58 0 0 0-.82-.07l-1.35 1.1a.58.58 0 0 0-.08.82l3.41 4.1a.58.58 0 0 0 .85.05l7-9.01a.58.58 0 0 0-.16-.83zM15.42 1.01l-1.46-.98a.58.58 0 0 0-.82.16l-3.32 4.27 1.34 1.13 3.42-4.4a.58.58 0 0 0-.16-.83l-.01.01zM7.22 10.3l-1.34-1.13-1.63 2.1a.58.58 0 0 0 .85.05l2.27-2.73-.01.01z"></path>
+                          </svg>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  
-                  <span className="text-[9px] text-muted-foreground mt-1 opacity-70">
-                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
                 </div>
               </div>
             );
           })
         )}
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef} className="h-2" />
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 p-3 bg-background/90 backdrop-blur-md border-t border-border safe-area-bottom">
+      <div className="absolute bottom-0 left-0 right-0 p-2 bg-[#F0F2F5] z-20">
         <form onSubmit={handleSend} className="flex items-end gap-2 max-w-screen-md mx-auto">
-          <Button type="button" variant="ghost" size="icon" className="shrink-0 h-10 w-10 text-muted-foreground hover:text-foreground">
-            <ImageIcon className="h-5 w-5" />
+          <Button type="button" variant="ghost" size="icon" className="shrink-0 h-11 w-11 text-muted-foreground hover:text-foreground rounded-full hover:bg-black/5">
+            <ImageIcon className="h-6 w-6" />
           </Button>
-          <div className="flex-1 bg-muted/50 rounded-2xl flex items-center px-1 overflow-hidden focus-within:ring-1 focus-within:ring-primary border border-border/50">
+          <div className="flex-1 bg-white rounded-2xl flex items-center min-h-[44px] overflow-hidden focus-within:ring-1 focus-within:ring-primary shadow-sm px-2 py-1">
             <Input 
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Message..." 
-              className="border-0 bg-transparent shadow-none focus-visible:ring-0 h-10 px-3"
+              placeholder="Type a message" 
+              className="border-0 bg-transparent shadow-none focus-visible:ring-0 px-2 py-2 w-full text-[15px]"
+              autoComplete="off"
             />
           </div>
           <Button 
             type="submit" 
             size="icon" 
             disabled={!content.trim() || sendMessage.isPending}
-            className={`shrink-0 h-10 w-10 rounded-full transition-all ${content.trim() ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-100" : "bg-muted text-muted-foreground scale-95"}`}
+            className={`shrink-0 h-11 w-11 rounded-full transition-all bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm ${content.trim() ? "scale-100 opacity-100" : "opacity-70 scale-95"}`}
           >
-            <Send className="h-4 w-4 ml-0.5" />
+            <Send className="h-5 w-5 ml-0.5" />
           </Button>
         </form>
       </div>
