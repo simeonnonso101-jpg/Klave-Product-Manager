@@ -3,13 +3,25 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Klave API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: users
+    description: User operations
+  - name: groups
+    description: Group/class operations
+  - name: messages
+    description: Chat message operations
+  - name: payments
+    description: Payment operations
+  - name: wallet
+    description: Wallet and earnings operations
+  - name: ai
+    description: AI lecture replication operations
 paths:
   /healthz:
     get:
@@ -24,6 +36,440 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List users
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserBody"
+      responses:
+        "201":
+          description: Created user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get user by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: Not found
+
+  /users/me:
+    get:
+      operationId: getCurrentUser
+      tags: [users]
+      summary: Get current user (first user for demo)
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /groups:
+    get:
+      operationId: listGroups
+      tags: [groups]
+      summary: List all groups
+      parameters:
+        - name: creatorId
+          in: query
+          schema:
+            type: ["integer", "null"]
+        - name: type
+          in: query
+          schema:
+            type: ["string", "null"]
+            enum: ["class", "personal", null]
+      responses:
+        "200":
+          description: List of groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Group"
+    post:
+      operationId: createGroup
+      tags: [groups]
+      summary: Create a group/class
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGroupBody"
+      responses:
+        "201":
+          description: Created group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+
+  /groups/{id}:
+    get:
+      operationId: getGroup
+      tags: [groups]
+      summary: Get group by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateGroup
+      tags: [groups]
+      summary: Update group
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateGroupBody"
+      responses:
+        "200":
+          description: Updated group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        "404":
+          description: Not found
+
+  /groups/{id}/members:
+    get:
+      operationId: listGroupMembers
+      tags: [groups]
+      summary: List members of a group
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GroupMember"
+    post:
+      operationId: addGroupMember
+      tags: [groups]
+      summary: Add member to group
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddGroupMemberBody"
+      responses:
+        "201":
+          description: Added member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupMember"
+
+  /groups/{id}/stats:
+    get:
+      operationId: getGroupStats
+      tags: [groups]
+      summary: Get group stats (members, revenue, messages)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Group stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupStats"
+
+  /messages:
+    get:
+      operationId: listMessages
+      tags: [messages]
+      summary: List messages in a group
+      parameters:
+        - name: groupId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: ["integer", "null"]
+      responses:
+        "200":
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+    post:
+      operationId: sendMessage
+      tags: [messages]
+      summary: Send a message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageBody"
+      responses:
+        "201":
+          description: Sent message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+  /messages/{id}:
+    delete:
+      operationId: deleteMessage
+      tags: [messages]
+      summary: Delete a message
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /payments:
+    get:
+      operationId: listPayments
+      tags: [payments]
+      summary: List all payments
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: ["integer", "null"]
+        - name: groupId
+          in: query
+          schema:
+            type: ["integer", "null"]
+      responses:
+        "200":
+          description: List of payments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Payment"
+    post:
+      operationId: createPayment
+      tags: [payments]
+      summary: Create a payment (join a paid group)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePaymentBody"
+      responses:
+        "201":
+          description: Payment created and group access granted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+
+  /wallet/summary:
+    get:
+      operationId: getWalletSummary
+      tags: [wallet]
+      summary: Get wallet summary for a creator
+      parameters:
+        - name: creatorId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Wallet summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WalletSummary"
+
+  /wallet/transactions:
+    get:
+      operationId: listTransactions
+      tags: [wallet]
+      summary: List all transactions for a user
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Transaction"
+
+  /wallet/withdraw:
+    post:
+      operationId: withdrawFunds
+      tags: [wallet]
+      summary: Withdraw funds from wallet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WithdrawBody"
+      responses:
+        "201":
+          description: Withdrawal initiated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+
+  /ai/replicate:
+    post:
+      operationId: replicateLecture
+      tags: [ai]
+      summary: Replicate a lecture to multiple groups using AI
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReplicateLectureBody"
+      responses:
+        "201":
+          description: Replication job started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReplicationJob"
+
+  /ai/jobs:
+    get:
+      operationId: listReplicationJobs
+      tags: [ai]
+      summary: List AI replication jobs
+      parameters:
+        - name: creatorId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of replication jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReplicationJob"
+
+  /dashboard/creator/{creatorId}:
+    get:
+      operationId: getCreatorDashboard
+      tags: [wallet]
+      summary: Get creator dashboard overview (earnings, groups, activity)
+      parameters:
+        - name: creatorId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Creator dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreatorDashboard"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +480,487 @@ components:
       required:
         - status
 
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [creator, student]
+        avatarUrl:
+          type: ["string", "null"]
+        bio:
+          type: ["string", "null"]
+        walletBalance:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - email
+        - role
+        - walletBalance
+        - createdAt
+
+    CreateUserBody:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [creator, student]
+        avatarUrl:
+          type: ["string", "null"]
+        bio:
+          type: ["string", "null"]
+      required:
+        - name
+        - email
+        - role
+
+    Group:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        type:
+          type: string
+          enum: [class, personal]
+        creatorId:
+          type: integer
+        price:
+          type: ["number", "null"]
+        subscriptionModel:
+          type: ["string", "null"]
+          enum: [weekly, monthly, one_time, null]
+        memberCount:
+          type: integer
+        isActive:
+          type: boolean
+        coverImageUrl:
+          type: ["string", "null"]
+        subject:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - type
+        - creatorId
+        - memberCount
+        - isActive
+        - createdAt
+
+    CreateGroupBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        type:
+          type: string
+          enum: [class, personal]
+        creatorId:
+          type: integer
+        price:
+          type: ["number", "null"]
+        subscriptionModel:
+          type: ["string", "null"]
+          enum: [weekly, monthly, one_time, null]
+        coverImageUrl:
+          type: ["string", "null"]
+        subject:
+          type: ["string", "null"]
+      required:
+        - name
+        - type
+        - creatorId
+
+    UpdateGroupBody:
+      type: object
+      properties:
+        name:
+          type: ["string", "null"]
+        description:
+          type: ["string", "null"]
+        price:
+          type: ["number", "null"]
+        subscriptionModel:
+          type: ["string", "null"]
+          enum: [weekly, monthly, one_time, null]
+        isActive:
+          type: ["boolean", "null"]
+        coverImageUrl:
+          type: ["string", "null"]
+        subject:
+          type: ["string", "null"]
+
+    GroupMember:
+      type: object
+      properties:
+        id:
+          type: integer
+        groupId:
+          type: integer
+        userId:
+          type: integer
+        role:
+          type: string
+          enum: [creator, student]
+        joinedAt:
+          type: string
+          format: date-time
+        user:
+          $ref: "#/components/schemas/User"
+      required:
+        - id
+        - groupId
+        - userId
+        - role
+        - joinedAt
+        - user
+
+    AddGroupMemberBody:
+      type: object
+      properties:
+        userId:
+          type: integer
+        role:
+          type: string
+          enum: [creator, student]
+      required:
+        - userId
+
+    GroupStats:
+      type: object
+      properties:
+        groupId:
+          type: integer
+        memberCount:
+          type: integer
+        totalRevenue:
+          type: number
+        messageCount:
+          type: integer
+        activeMembers:
+          type: integer
+      required:
+        - groupId
+        - memberCount
+        - totalRevenue
+        - messageCount
+        - activeMembers
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+        groupId:
+          type: integer
+        senderId:
+          type: integer
+        content:
+          type: string
+        type:
+          type: string
+          enum: [text, lecture, system, media]
+        mediaUrl:
+          type: ["string", "null"]
+        isReplicated:
+          type: boolean
+        replicationJobId:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        sender:
+          $ref: "#/components/schemas/User"
+      required:
+        - id
+        - groupId
+        - senderId
+        - content
+        - type
+        - isReplicated
+        - createdAt
+        - sender
+
+    SendMessageBody:
+      type: object
+      properties:
+        groupId:
+          type: integer
+        senderId:
+          type: integer
+        content:
+          type: string
+        type:
+          type: string
+          enum: [text, lecture, system, media]
+        mediaUrl:
+          type: ["string", "null"]
+      required:
+        - groupId
+        - senderId
+        - content
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        groupId:
+          type: integer
+        amount:
+          type: number
+        status:
+          type: string
+          enum: [pending, completed, failed, refunded]
+        paymentMethod:
+          type: string
+          enum: [wallet, card, bank_transfer]
+        createdAt:
+          type: string
+          format: date-time
+        group:
+          $ref: "#/components/schemas/Group"
+        user:
+          $ref: "#/components/schemas/User"
+      required:
+        - id
+        - userId
+        - groupId
+        - amount
+        - status
+        - paymentMethod
+        - createdAt
+        - group
+        - user
+
+    CreatePaymentBody:
+      type: object
+      properties:
+        userId:
+          type: integer
+        groupId:
+          type: integer
+        paymentMethod:
+          type: string
+          enum: [wallet, card, bank_transfer]
+      required:
+        - userId
+        - groupId
+        - paymentMethod
+
+    WalletSummary:
+      type: object
+      properties:
+        creatorId:
+          type: integer
+        totalEarnings:
+          type: number
+        availableBalance:
+          type: number
+        pendingBalance:
+          type: number
+        totalWithdrawn:
+          type: number
+        earningsByGroup:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupEarnings"
+        monthlyEarnings:
+          type: array
+          items:
+            $ref: "#/components/schemas/MonthlyEarnings"
+      required:
+        - creatorId
+        - totalEarnings
+        - availableBalance
+        - pendingBalance
+        - totalWithdrawn
+        - earningsByGroup
+        - monthlyEarnings
+
+    GroupEarnings:
+      type: object
+      properties:
+        groupId:
+          type: integer
+        groupName:
+          type: string
+        totalRevenue:
+          type: number
+        memberCount:
+          type: integer
+      required:
+        - groupId
+        - groupName
+        - totalRevenue
+        - memberCount
+
+    MonthlyEarnings:
+      type: object
+      properties:
+        month:
+          type: string
+        total:
+          type: number
+      required:
+        - month
+        - total
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        type:
+          type: string
+          enum: [credit, debit, withdrawal, refund]
+        amount:
+          type: number
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, completed, failed]
+        groupId:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - type
+        - amount
+        - description
+        - status
+        - createdAt
+
+    WithdrawBody:
+      type: object
+      properties:
+        userId:
+          type: integer
+        amount:
+          type: number
+        bankDetails:
+          type: string
+      required:
+        - userId
+        - amount
+        - bankDetails
+
+    ReplicateLectureBody:
+      type: object
+      properties:
+        sourceGroupId:
+          type: integer
+        messageId:
+          type: integer
+        targetGroupIds:
+          type: array
+          items:
+            type: integer
+        creatorId:
+          type: integer
+      required:
+        - sourceGroupId
+        - messageId
+        - targetGroupIds
+        - creatorId
+
+    ReplicationJob:
+      type: object
+      properties:
+        id:
+          type: integer
+        creatorId:
+          type: integer
+        sourceGroupId:
+          type: integer
+        messageId:
+          type: integer
+        targetGroupIds:
+          type: array
+          items:
+            type: integer
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        replicatedCount:
+          type: integer
+        totalTargets:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - creatorId
+        - sourceGroupId
+        - messageId
+        - targetGroupIds
+        - status
+        - replicatedCount
+        - totalTargets
+        - createdAt
+
+    CreatorDashboard:
+      type: object
+      properties:
+        creatorId:
+          type: integer
+        totalEarnings:
+          type: number
+        totalStudents:
+          type: integer
+        activeGroups:
+          type: integer
+        totalGroups:
+          type: integer
+        recentPayments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Payment"
+        recentMessages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Message"
+        replicationJobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReplicationJob"
+      required:
+        - creatorId
+        - totalEarnings
+        - totalStudents
+        - activeGroups
+        - totalGroups
+        - recentPayments
+        - recentMessages
+        - replicationJobs

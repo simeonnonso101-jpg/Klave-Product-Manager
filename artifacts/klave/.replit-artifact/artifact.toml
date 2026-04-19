@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Klave"
+version = "1.0.0"
+id = "artifacts/klave"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25728
+
+[services.development]
+run = "pnpm --filter @workspace/klave run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/klave", "run", "build" ]
+publicDir = "artifacts/klave/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25728"
+BASE_PATH = "/"

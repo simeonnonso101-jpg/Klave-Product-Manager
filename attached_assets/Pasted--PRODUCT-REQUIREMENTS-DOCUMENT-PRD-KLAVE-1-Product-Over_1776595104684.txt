@@ -1,0 +1,112 @@
+📄 PRODUCT REQUIREMENTS DOCUMENT (PRD) — KLAVE
+1. 🧩 Product Overview
+Product Name: Klave Category: Chat-based Learning & Monetization Platform Core Idea: Klave is a chat-first platform that enables creators to teach, sell, automate, and scale courses directly inside chat groups, powered by AI.
+Instead of using multiple tools (WhatsApp + Telegram + Bank Transfer + Google Drive + Excel), Klave brings everything into one ecosystem.
+2. 🎯 Problem Statement
+Creators today face these problems:
+❌ Managing students manually after payment
+❌ Repeating the same course multiple times
+❌ Using scattered tools (Telegram, WhatsApp, payment links, spreadsheets)
+❌ No centralized revenue tracking
+❌ Difficulty scaling teaching beyond small groups
+3. 💡 Solution
+Klave solves this by:
+✅ Allowing paid access to chat-based classes
+✅ Using AI to replicate lectures across 100+ groups automatically
+✅ Automating payment → access → delivery flow
+✅ Providing built-in wallet & analytics
+✅ Enabling marketing campaigns inside the app
+4. 👥 Target Users
+Primary Users:
+Course creators
+Coaches (Forex, Tech, Fitness, Academics)
+Digital product sellers
+Secondary Users:
+Students / learners
+Communities & niche groups
+5. 🔑 Core Features
+5.1 Chat System (Core Experience)
+Real-time messaging (like Telegram)
+Group chats (classes)
+Broadcast channels (optional future)
+Media support (PDF, video, audio, links)
+5.2 Paid Access Groups (🔥 Key Feature)
+Creator can:
+Set entry price
+Set subscription model (weekly/monthly)
+Requirement: Users must pay before joining. Payment is handled inside the group (no external links).
+5.3 AI Lecture Replication (🚀 Differentiator)
+Creator teaches once. AI:
+Records lecture (text/audio/video)
+Replicates into 100+ groups automatically
+Maintains structure across all groups
+Impact: This enables infinite scale without burnout.
+5.4 Automated Delivery System
+After payment, the user is automatically:
+Granted access to group OR
+Redirected to: PDF, Course material, or Private class.
+No manual approval needed.
+5.5 Wallet System 💰
+View earnings: Per group and Total earnings.
+Transaction history: Group payments, Personal payments, External transactions.
+Actions: Spend directly from wallet, Withdraw funds.
+Generation: Financial reports and Tax documents.
+5.6 Transaction Automation 📊
+Every payment is:
+Logged automatically
+Organized into clean financial records
+Exportable documents (CSV/PDF)
+Impact: Eliminates spreadsheets completely.
+5.7 Marketing Engine (GROW Tab) 📣
+Creators can run campaigns:
+Email marketing, SMS campaigns, In-app messaging (broadcast).
+Audience segmentation: Past buyers, Active students, Inactive users.
+5.8 Creator Pricing Control
+Creator sets: Product price and Profit margin visibility.
+System handles: Payment processing, Distribution, and Tracking.
+6. 🧱 App Structure (Navigation)
+🏠 Main UI: Chat-first (like Telegram/Instagram DMs)
+Chats Tab: All conversations (Groups, Personal chats, System messages).
+Singles Tab: Only 1-on-1 chats.
+Grow Tab: Campaign dashboard, Marketing tools (Email/SMS/Broadcast), and Analytics.
+Wallet Tab: All transactions, Withdrawals, Earnings analytics, and Tax docs.
+7. 🔄 User Flow
+User Type
+Step-by-Step Flow
+Creator
+Create group → Set price → Upload content → AI replicates → Users pay/join → Track earnings → Grow
+Student
+Discover class → Pay inside app → Instant access → Participate → Receive auto-updates
+
+8. 🧠 AI Features (Advanced Layer)
+Lecture replication across groups
+Smart content formatting
+Auto-responses (optional future)
+Content summarization (future)
+Personalized learning flow (future)
+9. 📈 Monetization Model
+% transaction fee (e.g., 5–10%)
+Subscription plans for creators
+Premium AI tools
+Marketing credits (SMS/email)
+10. 🏗️ MVP Scope (What to Build First)
+Chat system (groups + personal)
+Paid group access
+Payment integration
+Auto access after payment
+Basic wallet (track earnings)
+Simple AI replication (basic version)
+Note: Skip advanced marketing & AI initially.
+11. ⚠️ Risks & Considerations
+Payment security (very critical)
+Spam/scam creators
+AI replication accuracy
+Server scaling (for chat + AI)
+Compliance (financial regulations)
+12. 🚀 Future Expansion
+Marketplace for courses
+Affiliate system
+Creator discovery feed
+Live classes / streaming
+Mobile + Web apps
+API integrations
