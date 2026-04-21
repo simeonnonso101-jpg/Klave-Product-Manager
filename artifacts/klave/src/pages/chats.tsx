@@ -18,21 +18,18 @@ export default function ChatsPage() {
   return (
     <MainLayout>
       <div className="flex flex-col h-full bg-background">
-        <header className="px-4 pt-10 pb-3 bg-primary text-primary-foreground sticky top-0 z-10 shadow-sm">
+        <header className="px-4 pt-14 pb-4 bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] text-white sticky top-0 z-10 shadow-lg shadow-[#5A1DE6]/20">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-[28px] font-bold tracking-tight">Chats</h1>
-            {user && (
-              <Avatar className="h-9 w-9 ring-2 ring-primary-foreground/20 border border-primary">
-                <AvatarImage src={user.avatarUrl || undefined} />
-                <AvatarFallback className="bg-primary-foreground/20 text-primary-foreground">{user.name?.charAt(0)}</AvatarFallback>
-              </Avatar>
-            )}
+            <h1 className="text-[28px] font-bold tracking-tight flex items-center gap-2">
+              Chats
+              <span className="inline-block w-2 h-2 rounded-full bg-[#F4A300]" />
+            </h1>
           </div>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground" />
-            <Input 
-              placeholder="Search classes..." 
-              className="pl-10 bg-background text-foreground border-none focus-visible:ring-0 rounded-xl h-10 shadow-inner"
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-white/60" />
+            <Input
+              placeholder="Search classes..."
+              className="pl-10 bg-white/15 text-white placeholder:text-white/60 border-white/20 focus-visible:ring-2 focus-visible:ring-white/40 rounded-xl h-10 backdrop-blur-sm"
             />
           </div>
         </header>

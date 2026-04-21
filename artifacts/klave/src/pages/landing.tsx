@@ -10,48 +10,48 @@ const PURPLE_GRADIENT_HOVER = "hover:opacity-90";
 export default function LandingPage() {
   return (
     <div className="min-h-[100dvh] bg-gradient-to-br from-[#F5F5F5] via-[hsl(258,40%,96%)] to-[#F5F5F5]">
-      <header className="px-6 md:px-10 py-5 flex items-center justify-between max-w-6xl mx-auto">
-        <div className="flex items-center gap-2">
-          <img src={`${basePath}/logo.svg`} alt="Klave" className="h-9" />
+      <header className="px-4 sm:px-6 md:px-10 py-4 sm:py-5 flex items-center justify-between max-w-6xl mx-auto gap-2">
+        <div className="flex items-center gap-2 shrink-0">
+          <img src={`${basePath}/logo.svg`} alt="Klave" className="h-7 sm:h-9" />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <Link href="/sign-in">
-            <Button variant="ghost" className="rounded-full">Sign in</Button>
+            <Button variant="ghost" size="sm" className="rounded-full text-sm sm:text-base px-3 sm:px-4">Sign in</Button>
           </Link>
           <Link href="/sign-up">
-            <Button className={`rounded-full ${PURPLE_GRADIENT} ${PURPLE_GRADIENT_HOVER} text-white border-0`}>
+            <Button size="sm" className={`rounded-full ${PURPLE_GRADIENT} ${PURPLE_GRADIENT_HOVER} text-white border-0 text-sm sm:text-base px-3 sm:px-5`}>
               Get started
             </Button>
           </Link>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 md:px-10 pt-12 md:pt-20 pb-24">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
-          <div className="space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 border border-[hsl(255,15%,90%)] text-sm shadow-sm">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 md:px-10 pt-8 sm:pt-12 md:pt-20 pb-24">
+        <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+          <div className="space-y-5 sm:space-y-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 border border-[hsl(255,15%,90%)] text-xs sm:text-sm shadow-sm">
               <Sparkles className="h-4 w-4 text-[#5A1DE6]" />
               <span className="font-medium text-[hsl(255,25%,18%)]">Built for real estate coaches</span>
             </div>
 
-            <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-[hsl(255,25%,12%)] leading-[1.05]">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-[hsl(255,25%,12%)] leading-[1.05]">
               Sell your courses in a chat your students already love.
             </h1>
 
-            <p className="text-lg text-[hsl(255,8%,42%)] leading-relaxed">
+            <p className="text-base sm:text-lg text-[hsl(255,8%,42%)] leading-relaxed">
               Klave is the WhatsApp-style platform built for real estate investors, wholesalers, and educators.
               Create free or paid groups, get paid instantly, and teach hundreds of students at once.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <Link href="/sign-up">
-                <Button size="lg" className={`rounded-full ${PURPLE_GRADIENT} ${PURPLE_GRADIENT_HOVER} text-white border-0 px-7 h-12 text-base font-semibold shadow-lg shadow-[#5A1DE6]/25`}>
+              <Link href="/sign-up" className="w-full sm:w-auto">
+                <Button size="lg" className={`w-full sm:w-auto rounded-full ${PURPLE_GRADIENT} ${PURPLE_GRADIENT_HOVER} text-white border-0 px-7 h-12 text-base font-semibold shadow-lg shadow-[#5A1DE6]/25`}>
                   Start your first group
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Link href="/sign-in">
-                <Button size="lg" variant="outline" className="rounded-full px-7 h-12 text-base font-semibold border-[hsl(255,15%,85%)] bg-white/60">
+              <Link href="/sign-in" className="w-full sm:w-auto">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto rounded-full px-7 h-12 text-base font-semibold border-[hsl(255,15%,85%)] bg-white/60">
                   I already have an account
                 </Button>
               </Link>
