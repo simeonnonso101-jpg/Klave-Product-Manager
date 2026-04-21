@@ -86,25 +86,27 @@ export default function WalletPage() {
 
         <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-20">
           {/* Main Balance Card */}
-          <Card className="bg-primary text-primary-foreground border-none overflow-hidden relative shadow-lg rounded-3xl">
-            <div className="absolute top-[-20%] right-[-10%] opacity-10 rotate-12">
+          <Card className="bg-gradient-to-br from-[#F59E0B] via-[#F59E0B] to-[#D97706] text-white border-none overflow-hidden relative shadow-lg shadow-[#F59E0B]/25 rounded-3xl">
+            <div className="absolute -top-12 -right-8 w-48 h-48 rounded-full bg-white/15 blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-16 -left-10 w-56 h-56 rounded-full bg-[#5A1DE6]/20 blur-3xl pointer-events-none" />
+            <div className="absolute top-[-20%] right-[-10%] opacity-10 rotate-12 pointer-events-none">
               <WalletIcon className="w-48 h-48" />
             </div>
-            <CardHeader className="pb-2 pt-6">
-              <CardTitle className="text-sm font-medium text-primary-foreground/80 uppercase tracking-widest">Available Balance</CardTitle>
+            <CardHeader className="pb-2 pt-6 relative">
+              <CardTitle className="text-xs sm:text-sm font-medium text-white/90 uppercase tracking-widest">Available Balance</CardTitle>
             </CardHeader>
-            <CardContent className="pb-6">
+            <CardContent className="pb-6 relative">
               {isLoadingSummary ? (
-                <Skeleton className="h-12 w-40 bg-primary-foreground/20 mt-2" />
+                <Skeleton className="h-12 w-40 bg-white/20 mt-2" />
               ) : (
-                <div className="text-5xl font-bold tracking-tight">
+                <div className="text-4xl sm:text-5xl font-bold tracking-tight">
                   ${summary?.availableBalance?.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00'}
                 </div>
               )}
-              <div className="mt-8">
+              <div className="mt-6 sm:mt-8">
                 <Dialog open={isWithdrawOpen} onOpenChange={setIsWithdrawOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="secondary" className="w-full h-12 rounded-xl font-bold bg-white text-primary hover:bg-white/90 shadow-sm text-[16px]">
+                    <Button variant="secondary" className="w-full h-12 rounded-xl font-bold bg-white text-[#D97706] hover:bg-white/95 shadow-md text-[16px]">
                       <Building className="mr-2 h-5 w-5" /> Withdraw to Bank
                     </Button>
                   </DialogTrigger>

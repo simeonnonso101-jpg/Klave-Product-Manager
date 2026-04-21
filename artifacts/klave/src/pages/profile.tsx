@@ -56,32 +56,32 @@ export default function ProfilePage() {
   return (
     <MainLayout>
       <div className="flex flex-col h-full bg-background">
-        {/* Gradient hero header */}
-        <div className="relative bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] text-white pt-14 pb-20 px-5 shadow-lg shadow-[#5A1DE6]/20 overflow-hidden">
-          <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-[#F59E0B]/20 blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-20 -left-10 w-56 h-56 rounded-full bg-white/10 blur-3xl pointer-events-none" />
+        {/* Orange gradient hero header */}
+        <div className="relative bg-gradient-to-br from-[#F59E0B] via-[#F59E0B] to-[#D97706] text-white pt-14 pb-20 px-4 sm:px-5 shadow-lg shadow-[#F59E0B]/25 overflow-hidden">
+          <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-white/15 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-12 w-60 h-60 rounded-full bg-[#5A1DE6]/20 blur-3xl pointer-events-none" />
 
-          <div className="relative flex items-center gap-4">
+          <div className="relative flex items-center gap-3 sm:gap-4">
             <div className="relative shrink-0">
-              <Avatar className="h-20 w-20 border-2 border-white/40 shadow-xl ring-4 ring-white/10">
+              <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-2 border-white/50 shadow-xl ring-4 ring-white/15">
                 <AvatarImage src={clerkUser?.imageUrl || user?.avatarUrl || undefined} className="object-cover" />
-                <AvatarFallback className="bg-white/20 backdrop-blur text-white text-2xl font-bold">{initial}</AvatarFallback>
+                <AvatarFallback className="bg-white/20 backdrop-blur text-white text-xl sm:text-2xl font-bold">{initial}</AvatarFallback>
               </Avatar>
-              <span className="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full bg-[#F59E0B] text-[10px] font-bold text-[hsl(255,25%,14%)] shadow-md uppercase tracking-wider">
+              <span className="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full bg-[#5A1DE6] text-[9px] sm:text-[10px] font-bold text-white shadow-md uppercase tracking-wider">
                 {isCreator ? 'Pro' : 'Free'}
               </span>
             </div>
             <div className="min-w-0 flex-1">
-              <h1 className="text-2xl font-bold leading-tight truncate">{user?.name || clerkUser?.fullName || 'Loading...'}</h1>
-              <p className="text-white/70 text-sm truncate mt-0.5">{user?.email || clerkUser?.primaryEmailAddress?.emailAddress}</p>
-              <p className="text-white/60 text-xs mt-1">Member since {memberSince}</p>
+              <h1 className="text-xl sm:text-2xl font-bold leading-tight truncate">{user?.name || clerkUser?.fullName || 'Loading...'}</h1>
+              <p className="text-white/85 text-xs sm:text-sm truncate mt-0.5">{user?.email || clerkUser?.primaryEmailAddress?.emailAddress}</p>
+              <p className="text-white/70 text-[11px] sm:text-xs mt-0.5 sm:mt-1">Member since {memberSince}</p>
             </div>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 pb-32 -mt-12">
+        <div className="flex-1 overflow-y-auto px-3 sm:px-4 pb-32 -mt-12">
           {/* Stats cards floating over header */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-6">
             <StatCard
               icon={<BookOpen className="w-4 h-4" />}
               label={isCreator ? 'Classes' : 'Joined'}
@@ -103,34 +103,34 @@ export default function ProfilePage() {
 
           {/* Wallet card for creators */}
           {isCreator && (
-            <Card className="border-none shadow-lg shadow-[#5A1DE6]/15 rounded-2xl overflow-hidden bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] text-white mb-5 relative">
-              <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-[#F59E0B]/30 blur-2xl pointer-events-none" />
-              <CardContent className="p-5 relative">
+            <Card className="border-none shadow-lg shadow-[#F59E0B]/20 rounded-2xl overflow-hidden bg-gradient-to-br from-[#F59E0B] to-[#D97706] text-white mb-4 sm:mb-5 relative">
+              <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-white/20 blur-2xl pointer-events-none" />
+              <CardContent className="p-4 sm:p-5 relative">
                 <div className="flex items-center justify-between">
-                  <div>
+                  <div className="min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <Wallet className="w-4 h-4 text-white/80" />
-                      <p className="text-xs font-semibold text-white/80 uppercase tracking-widest">Earnings</p>
+                      <Wallet className="w-4 h-4 text-white/90" />
+                      <p className="text-[11px] sm:text-xs font-semibold text-white/90 uppercase tracking-widest">Earnings</p>
                     </div>
-                    <p className="text-3xl font-bold">${user?.walletBalance?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || '0.00'}</p>
-                    <p className="text-xs text-white/70 mt-1">Available to withdraw</p>
+                    <p className="text-2xl sm:text-3xl font-bold truncate">${user?.walletBalance?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || '0.00'}</p>
+                    <p className="text-[11px] sm:text-xs text-white/80 mt-1">Available to withdraw</p>
                   </div>
-                  <span className="inline-block w-3 h-3 rounded-full bg-[#F59E0B] shadow-lg shadow-[#F59E0B]/50 animate-pulse" />
+                  <span className="inline-block w-3 h-3 rounded-full bg-white shadow-lg shadow-white/50 animate-pulse shrink-0 ml-2" />
                 </div>
               </CardContent>
             </Card>
           )}
 
           {/* Personal info */}
-          <Card className="border-border/60 shadow-sm rounded-2xl overflow-hidden bg-card mb-4">
-            <div className="px-5 pt-5 pb-2 flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-[#5A1DE6]/10 flex items-center justify-center">
-                <Settings className="w-4 h-4 text-[#5A1DE6]" />
+          <Card className="border-border/60 shadow-sm rounded-2xl overflow-hidden bg-card mb-3 sm:mb-4">
+            <div className="px-4 sm:px-5 pt-4 sm:pt-5 pb-2 flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg bg-[#F59E0B]/15 flex items-center justify-center">
+                <Settings className="w-4 h-4 text-[#F59E0B]" />
               </div>
-              <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Personal Info</h3>
+              <h3 className="text-xs sm:text-sm font-bold text-foreground uppercase tracking-wider">Personal Info</h3>
             </div>
-            <CardContent className="p-5 pt-3">
-              <form onSubmit={handleUpdateProfile} className="space-y-4">
+            <CardContent className="p-4 sm:p-5 pt-3">
+              <form onSubmit={handleUpdateProfile} className="space-y-3 sm:space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name" className="font-semibold text-foreground text-sm">Full Name</Label>
                   <Input
@@ -147,14 +147,14 @@ export default function ProfilePage() {
                     id="bio"
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
-                    className="min-h-[88px] resize-none rounded-xl border-border/60"
+                    className="min-h-[80px] sm:min-h-[88px] resize-none rounded-xl border-border/60"
                     placeholder="Tell us about your real estate journey..."
                   />
                 </div>
                 <Button
                   type="submit"
                   disabled={updateProfile.isPending || isLoading}
-                  className="w-full h-11 rounded-xl font-bold text-base bg-gradient-to-r from-[#5A1DE6] to-[#3A0CA3] hover:opacity-90 border-0 shadow-md shadow-[#5A1DE6]/25"
+                  className="w-full h-11 rounded-xl font-bold text-base bg-gradient-to-r from-[#F59E0B] to-[#D97706] hover:opacity-90 border-0 shadow-md shadow-[#F59E0B]/30 text-white"
                 >
                   {updateProfile.isPending && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
                   Save Changes
@@ -164,15 +164,15 @@ export default function ProfilePage() {
           </Card>
 
           {/* Account actions */}
-          <Card className="border-border/60 shadow-sm rounded-2xl overflow-hidden bg-card mb-4">
+          <Card className="border-border/60 shadow-sm rounded-2xl overflow-hidden bg-card mb-3 sm:mb-4">
             <button
               onClick={() => openUserProfile()}
-              className="w-full flex items-center gap-3 px-5 py-4 hover:bg-muted/50 transition-colors"
+              className="w-full flex items-center gap-3 px-4 sm:px-5 py-3.5 sm:py-4 hover:bg-muted/50 transition-colors text-left"
             >
-              <div className="h-9 w-9 rounded-lg bg-[#5A1DE6]/10 flex items-center justify-center">
+              <div className="h-9 w-9 rounded-lg bg-[#5A1DE6]/10 flex items-center justify-center shrink-0">
                 <Mail className="w-4 h-4 text-[#5A1DE6]" />
               </div>
-              <div className="flex-1 text-left min-w-0">
+              <div className="flex-1 min-w-0">
                 <div className="font-semibold text-foreground text-sm">Account & Security</div>
                 <div className="text-xs text-muted-foreground truncate">{clerkUser?.primaryEmailAddress?.emailAddress}</div>
               </div>
@@ -181,14 +181,14 @@ export default function ProfilePage() {
             <div className="border-t border-border/60" />
             <button
               onClick={() => toast({ title: "Coming soon", description: "Notification preferences will be available soon." })}
-              className="w-full flex items-center gap-3 px-5 py-4 hover:bg-muted/50 transition-colors"
+              className="w-full flex items-center gap-3 px-4 sm:px-5 py-3.5 sm:py-4 hover:bg-muted/50 transition-colors text-left"
             >
-              <div className="h-9 w-9 rounded-lg bg-[#F59E0B]/15 flex items-center justify-center">
+              <div className="h-9 w-9 rounded-lg bg-[#F59E0B]/15 flex items-center justify-center shrink-0">
                 <Sparkles className="w-4 h-4 text-[#F59E0B]" />
               </div>
-              <div className="flex-1 text-left">
+              <div className="flex-1 min-w-0">
                 <div className="font-semibold text-foreground text-sm">Notifications</div>
-                <div className="text-xs text-muted-foreground">Manage what you get notified about</div>
+                <div className="text-xs text-muted-foreground truncate">Manage what you get notified about</div>
               </div>
               <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
             </button>
@@ -210,12 +210,12 @@ export default function ProfilePage() {
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | number }) {
   return (
-    <div className="bg-white rounded-2xl border border-border/60 shadow-md shadow-black/5 p-3 flex flex-col items-center text-center">
-      <div className="h-7 w-7 rounded-lg bg-[#5A1DE6]/10 text-[#5A1DE6] flex items-center justify-center mb-1.5">
+    <div className="bg-white rounded-2xl border border-border/60 shadow-md shadow-black/5 p-2.5 sm:p-3 flex flex-col items-center text-center min-w-0">
+      <div className="h-7 w-7 rounded-lg bg-[#F59E0B]/15 text-[#F59E0B] flex items-center justify-center mb-1 sm:mb-1.5">
         {icon}
       </div>
-      <div className="text-lg font-bold text-foreground leading-tight">{value}</div>
-      <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mt-0.5">{label}</div>
+      <div className="text-base sm:text-lg font-bold text-foreground leading-tight truncate w-full">{value}</div>
+      <div className="text-[9px] sm:text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mt-0.5 truncate w-full">{label}</div>
     </div>
   );
 }
