@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MainLayout } from "@/components/layout/main-layout";
 import { useGetCurrentUser, useUpdateCurrentUser, useListGroups } from "@workspace/api-client-react";
 import { useUser, useClerk } from "@clerk/react";
@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Settings, LogOut, Wallet, Mail, Users, BookOpen, Bell, ChevronRight } from "lucide-react";
+import { Loader2, Settings, LogOut, Wallet, Mail, Users, BookOpen, Bell, ChevronRight, Check } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -24,30 +24,57 @@ export default function ProfilePage() {
 
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const initializedRef = useRef(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const userRef = useRef(user);
+  const requestSeqRef = useRef(0);
+
+  useEffect(() => { userRef.current = user; }, [user]);
 
   useEffect(() => {
-    if (user) {
+    if (user && !initializedRef.current) {
       setName(user.name || "");
       setBio(user.bio || "");
+      initializedRef.current = true;
     }
   }, [user]);
 
-  const handleUpdateProfile = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
+  // Silent auto-save: debounce 800ms after edit, save in the background.
+  // Uses userRef to avoid stale closures and a request seq to ignore out-of-order responses.
+  useEffect(() => {
+    if (!initializedRef.current) return;
+    const liveUser = userRef.current;
+    if (!liveUser) return;
+    const currentName = liveUser.name || "";
+    const currentBio = liveUser.bio || "";
+    if (name === currentName && bio === currentBio) return;
 
-    updateProfile.mutate({
-      data: { name, bio }
-    }, {
-      onSuccess: (updatedUser) => {
-        toast({ title: "Profile updated", description: "Your changes have been saved." });
-        queryClient.setQueryData(['/api/users/me'], updatedUser);
-      },
-      onError: () => {
-        toast({ title: "Update failed", description: "Failed to save profile changes.", variant: "destructive" });
-      }
-    });
-  };
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setSaveState("saving");
+      const seq = ++requestSeqRef.current;
+      updateProfile.mutate({ data: { name, bio } }, {
+        onSuccess: (updatedUser) => {
+          // Ignore stale responses (a newer save was issued)
+          if (seq !== requestSeqRef.current) return;
+          queryClient.setQueryData(['/api/users/me'], updatedUser);
+          setSaveState("saved");
+          if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+          savedTimerRef.current = setTimeout(() => setSaveState("idle"), 1800);
+        },
+        onError: () => {
+          if (seq !== requestSeqRef.current) return;
+          setSaveState("idle");
+          toast({ title: "Couldn't save", description: "We'll try again — check your connection.", variant: "destructive" });
+        }
+      });
+    }, 800);
+
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [name, bio]);
 
   const initial = (clerkUser?.firstName?.[0] || clerkUser?.username?.[0] || clerkUser?.primaryEmailAddress?.emailAddress?.[0] || "K").toUpperCase();
   const isCreator = user?.role === 'creator';
@@ -115,22 +142,37 @@ export default function ProfilePage() {
             />
           </div>
 
-          {/* Personal info */}
+          {/* Personal info — auto-saves silently as you type */}
           <Card className="border-border/60 shadow-sm rounded-2xl overflow-hidden bg-card">
-            <div className="px-5 pt-5 pb-2 flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-[#5A1DE6]/10 flex items-center justify-center">
-                <Settings className="w-4 h-4 text-[#5A1DE6] dark:text-[#9F75FF]" />
+            <div className="px-5 pt-5 pb-2 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg bg-[#5A1DE6]/10 flex items-center justify-center">
+                  <Settings className="w-4 h-4 text-[#5A1DE6] dark:text-[#9F75FF]" />
+                </div>
+                <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Personal Info</h3>
               </div>
-              <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Personal Info</h3>
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold transition-opacity duration-300" aria-live="polite">
+                {saveState === "saving" && (
+                  <span className="flex items-center gap-1.5 text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Saving
+                  </span>
+                )}
+                {saveState === "saved" && (
+                  <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                    <Check className="h-3.5 w-3.5" /> Saved
+                  </span>
+                )}
+              </div>
             </div>
             <CardContent className="p-5 pt-3">
-              <form onSubmit={handleUpdateProfile} className="space-y-4">
+              <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name" className="font-semibold text-foreground text-sm">Full Name</Label>
                   <Input
                     id="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    disabled={isLoading}
                     className="h-11 rounded-xl border-border/60"
                     placeholder="Your name"
                   />
@@ -141,19 +183,13 @@ export default function ProfilePage() {
                     id="bio"
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
+                    disabled={isLoading}
                     className="min-h-[88px] resize-none rounded-xl border-border/60"
                     placeholder="Tell us about your real estate journey..."
                   />
                 </div>
-                <Button
-                  type="submit"
-                  disabled={updateProfile.isPending || isLoading}
-                  className="w-full h-11 rounded-xl font-bold text-base bg-gradient-to-r from-[#5A1DE6] to-[#3A0CA3] hover:opacity-90 border-0 shadow-md shadow-[#5A1DE6]/30 text-white"
-                >
-                  {updateProfile.isPending && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-                  Save Changes
-                </Button>
-              </form>
+                <p className="text-[11px] text-muted-foreground">Changes save automatically as you type.</p>
+              </div>
             </CardContent>
           </Card>
 

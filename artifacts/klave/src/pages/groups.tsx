@@ -46,16 +46,19 @@ export default function GroupsPage() {
 
   return (
     <MainLayout>
-      <div className="flex flex-col h-full">
-        <header className="px-4 pt-14 pb-4 bg-background/70 backdrop-blur-2xl border-b border-border/60 sticky top-0 z-10 shadow-sm flex flex-col gap-3">
+      <div className="relative flex flex-col h-full bg-background overflow-hidden">
+        <div className="pointer-events-none absolute -top-32 -right-32 w-80 h-80 rounded-full bg-gradient-to-br from-[#5A1DE6]/20 to-[#3A0CA3]/10 blur-3xl" />
+        <div className="pointer-events-none absolute top-1/3 -left-32 w-72 h-72 rounded-full bg-gradient-to-tr from-[#F59E0B]/10 to-transparent blur-3xl" />
+
+        <header className="relative px-4 pt-14 pb-4 bg-background/60 backdrop-blur-2xl border-b border-border/60 sticky top-0 z-10 flex flex-col gap-3">
           <div className="flex justify-between items-center">
-            <h1 className="text-[28px] font-bold tracking-tight text-[#5A1DE6] flex items-center gap-2">
-              Discover
-              <span className="inline-block w-2 h-2 rounded-full bg-[#F59E0B]" />
+            <h1 className="text-[28px] font-bold tracking-tight flex items-center gap-2">
+              <span className="bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] bg-clip-text text-transparent">Discover</span>
+              <span className="inline-block w-2 h-2 rounded-full bg-[#F59E0B] mt-1" />
             </h1>
             <Link href="/groups/new">
               <Button size="sm" className="gap-1.5 rounded-full font-semibold bg-gradient-to-r from-[#5A1DE6] to-[#3A0CA3] text-white border-0 hover:opacity-90 shadow-md shadow-[#5A1DE6]/25">
-                <Plus className="h-4 w-4" /> New Course
+                <Plus className="h-4 w-4" /> New
               </Button>
             </Link>
           </div>
@@ -65,33 +68,33 @@ export default function GroupsPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Find real estate courses, investing strategies..."
-              className="pl-10 bg-background/70 dark:bg-card/70 text-foreground border-border/70 focus-visible:ring-2 focus-visible:ring-[#5A1DE6]/30 rounded-xl h-10 backdrop-blur-sm"
+              className="pl-10 bg-card/80 text-foreground border-border/60 focus-visible:ring-2 focus-visible:ring-[#5A1DE6]/30 rounded-2xl h-11 backdrop-blur-sm shadow-sm"
             />
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-20 bg-background">
+        <div className="relative flex-1 overflow-y-auto p-4 space-y-6 pb-20">
           {/* Categories row */}
           <div className="flex overflow-x-auto gap-2 pb-2 -mx-4 px-4 scrollbar-hide">
             {categories.map((cat) => (
-              <Badge 
+              <button
                 key={cat.label}
-                variant={activeCategory === cat.label ? "secondary" : "outline"} 
-                className={`px-3 py-1.5 text-sm whitespace-nowrap cursor-pointer transition-colors ${
-                  activeCategory === cat.label 
-                    ? "bg-primary/10 text-primary hover:bg-primary/20 border-transparent" 
-                    : "hover:bg-muted"
-                }`}
+                type="button"
                 onClick={() => setActiveCategory(activeCategory === cat.label ? null : cat.label)}
+                className={`inline-flex items-center px-3.5 py-1.5 text-sm font-semibold whitespace-nowrap rounded-full border transition-all ${
+                  activeCategory === cat.label
+                    ? "bg-gradient-to-r from-[#5A1DE6] to-[#3A0CA3] text-white border-transparent shadow-md shadow-[#5A1DE6]/25"
+                    : "bg-card text-foreground border-border/60 hover:border-[#5A1DE6]/40 hover:text-[#5A1DE6] dark:hover:text-[#9F75FF]"
+                }`}
               >
                 {cat.icon} {cat.label}
-              </Badge>
+              </button>
             ))}
           </div>
 
           <section>
             <h2 className="text-sm font-semibold text-muted-foreground mb-4 flex items-center gap-2 uppercase tracking-wide">
-              <Star className="h-4 w-4 text-accent" /> Featured Courses
+              <Star className="h-4 w-4 text-[#F59E0B]" /> Featured Courses
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {isLoading ? (

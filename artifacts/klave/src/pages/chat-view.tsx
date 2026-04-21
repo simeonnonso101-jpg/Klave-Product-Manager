@@ -1,6 +1,6 @@
 import { useGetGroup, useGetGroupStats, useListMessages, useSendMessage, useDeleteMessage, useReplicateLecture, useListGroups, useGetCurrentUser, getListMessagesQueryKey, getListReplicationJobsQueryKey } from "@workspace/api-client-react";
 import { useParams, Link, useLocation } from "wouter";
-import { ArrowLeft, Send, Sparkles, Image as ImageIcon, Trash2, Copy, Loader2 } from "lucide-react";
+import { ArrowLeft, Send, Sparkles, Image as ImageIcon, Trash2, Copy, Loader2, Smile, Mic, Plus, Camera, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -54,13 +54,46 @@ export default function ChatViewPage() {
 
   const [content, setContent] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const [replicateMessageId, setReplicateMessageId] = useState<number | null>(null);
   const [targetGroupIds, setTargetGroupIds] = useState<number[]>([]);
+  const [reactions, setReactions] = useState<Record<number, string[]>>({});
+  const [showScrollDown, setShowScrollDown] = useState(false);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+      setShowScrollDown(distFromBottom > 200);
+    };
+    el.addEventListener("scroll", onScroll);
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const addReaction = (messageId: number, emoji: string) => {
+    setReactions(prev => {
+      const current = prev[messageId] || [];
+      if (current.includes(emoji)) {
+        return { ...prev, [messageId]: current.filter(e => e !== emoji) };
+      }
+      return { ...prev, [messageId]: [...current, emoji] };
+    });
+  };
+
+  const QUICK_REACTIONS = ["heart", "fire", "100", "clap", "rocket"] as const;
+  const REACTION_EMOJI: Record<string, string> = {
+    heart: "♥",
+    fire: "✦",
+    "100": "★",
+    clap: "✓",
+    rocket: "▲",
+  };
 
   const handleSend = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -164,7 +197,7 @@ export default function ChatViewPage() {
         )}
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 relative z-10 pb-20">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3 relative z-10 pb-20">
         {isLoadingMessages ? (
           <div className="flex justify-center p-4">
             <div className="bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full text-xs text-muted-foreground shadow-sm">
@@ -210,24 +243,44 @@ export default function ChatViewPage() {
                   )}
                   
                   <div className="flex items-center gap-2 relative">
-                    {isMe && (
-                      <div className="flex flex-col gap-1 opacity-0 group-hover/msg:opacity-100 transition-opacity absolute right-[calc(100%+8px)] top-1/2 -translate-y-1/2">
-                        <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full bg-background/80 shadow-sm text-muted-foreground hover:text-destructive hover:bg-background" onClick={() => handleDelete(msg.id)}>
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                        {isCreator && (
-                          <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full bg-background/80 shadow-sm text-muted-foreground hover:text-primary hover:bg-background" onClick={() => setReplicateMessageId(msg.id)}>
-                            <Copy className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                    
+                    {/* Hover reaction quick bar */}
+                    <div className={`flex items-center gap-0.5 opacity-0 group-hover/msg:opacity-100 transition-opacity absolute ${isMe ? "right-[calc(100%+8px)]" : "left-[calc(100%+8px)]"} top-1/2 -translate-y-1/2 bg-card/95 backdrop-blur-md border border-border/60 rounded-full shadow-lg px-1.5 py-1 z-10`}>
+                      {QUICK_REACTIONS.map(r => (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => addReaction(msg.id, r)}
+                          className={`h-7 w-7 rounded-full flex items-center justify-center text-base hover:scale-125 hover:bg-muted transition-all font-semibold ${
+                            r === "heart" ? "text-rose-500" :
+                            r === "fire" ? "text-[#F59E0B]" :
+                            r === "100" ? "text-[#5A1DE6]" :
+                            r === "clap" ? "text-emerald-500" : "text-blue-500"
+                          }`}
+                          title={r}
+                        >
+                          {REACTION_EMOJI[r]}
+                        </button>
+                      ))}
+                      {isMe && (
+                        <>
+                          <span className="w-px h-5 bg-border/60 mx-0.5" />
+                          <button type="button" onClick={() => handleDelete(msg.id)} className="h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all" title="Delete">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                          {isCreator && (
+                            <button type="button" onClick={() => setReplicateMessageId(msg.id)} className="h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-[#5A1DE6] hover:bg-[#5A1DE6]/10 transition-all" title="Replicate">
+                              <Copy className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+
                     <div
                       className={`px-3.5 py-2 text-[15px] shadow-sm relative ${
                         isMe
                           ? "bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] text-white shadow-[#5A1DE6]/20"
-                          : "bg-white text-foreground"
+                          : "bg-white dark:bg-card text-foreground"
                       } ${
                         showTail && isMe ? "rounded-l-2xl rounded-tr-2xl rounded-br-sm" :
                         showTail && !isMe ? "rounded-r-2xl rounded-tl-2xl rounded-bl-sm" : "rounded-2xl"
@@ -239,7 +292,7 @@ export default function ChatViewPage() {
                       <span className="leading-relaxed">{msg.content}</span>
 
                       <div className="flex justify-end items-center gap-1 mt-1 -mb-0.5 min-w-[50px]">
-                        <span className={`text-[10px] inline-block text-right w-full ${isMe ? "text-white/70" : "text-black/40"}`}>
+                        <span className={`text-[10px] inline-block text-right w-full ${isMe ? "text-white/70" : "text-black/40 dark:text-white/40"}`}>
                           {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                         {isMe && (
@@ -250,6 +303,28 @@ export default function ChatViewPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Reactions display */}
+                  {reactions[msg.id] && reactions[msg.id].length > 0 && (
+                    <div className={`flex items-center gap-1 mt-1 ${isMe ? "self-end mr-1" : "self-start ml-1"}`}>
+                      {reactions[msg.id].map(r => (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => addReaction(msg.id, r)}
+                          className="bg-card border border-border/60 rounded-full px-2 py-0.5 text-xs flex items-center gap-1 shadow-sm hover:scale-110 transition-transform"
+                          title="Remove reaction"
+                        >
+                          <span className={`font-semibold ${
+                            r === "heart" ? "text-rose-500" :
+                            r === "fire" ? "text-[#F59E0B]" :
+                            r === "100" ? "text-[#5A1DE6]" :
+                            r === "clap" ? "text-emerald-500" : "text-blue-500"
+                          }`}>{REACTION_EMOJI[r]}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
               </div>
@@ -259,12 +334,24 @@ export default function ChatViewPage() {
         <div ref={messagesEndRef} className="h-2" />
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 px-2 pt-2 pb-3 bg-white/80 backdrop-blur-xl border-t border-white/40 z-20">
-        <form onSubmit={handleSend} className="flex items-end gap-2 max-w-screen-md mx-auto">
-          <Button type="button" variant="ghost" size="icon" className="shrink-0 h-11 w-11 text-muted-foreground hover:text-[#5A1DE6] hover:bg-[#5A1DE6]/10 rounded-full" aria-label="Attach">
-            <ImageIcon className="h-5 w-5" />
-          </Button>
-          <div className="flex-1 bg-white rounded-2xl flex items-end min-h-[44px] max-h-[140px] overflow-hidden focus-within:ring-2 focus-within:ring-[#5A1DE6]/40 shadow-sm border border-border/60 px-1">
+      {/* Scroll-to-bottom FAB */}
+      {showScrollDown && (
+        <button
+          type="button"
+          onClick={() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })}
+          className="absolute bottom-24 right-4 z-30 h-10 w-10 rounded-full bg-card border border-border/60 shadow-lg flex items-center justify-center text-foreground hover:scale-110 transition-transform"
+          aria-label="Scroll to latest"
+        >
+          <ChevronDown className="h-5 w-5" />
+        </button>
+      )}
+
+      <div className="absolute bottom-0 left-0 right-0 px-2 pt-2 pb-3 bg-background/85 backdrop-blur-xl border-t border-border/60 z-20">
+        <form onSubmit={handleSend} className="flex items-end gap-1.5 max-w-screen-md mx-auto">
+          <div className="flex-1 bg-card rounded-3xl flex items-end min-h-[44px] max-h-[140px] focus-within:ring-2 focus-within:ring-[#5A1DE6]/40 shadow-sm border border-border/60 pl-1.5 pr-1">
+            <button type="button" className="shrink-0 h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-[#5A1DE6] rounded-full transition-colors self-end" aria-label="Emoji">
+              <Smile className="h-5 w-5" />
+            </button>
             <textarea
               value={content}
               onChange={(e) => {
@@ -278,20 +365,41 @@ export default function ChatViewPage() {
                   handleSend();
                 }
               }}
-              placeholder="Type a message"
+              placeholder="Message"
               rows={1}
-              className="border-0 bg-transparent shadow-none focus:outline-none focus-visible:ring-0 px-3 py-2.5 w-full text-[15px] resize-none leading-tight"
+              className="border-0 bg-transparent shadow-none focus:outline-none focus-visible:ring-0 py-2.5 px-1 w-full text-[15px] resize-none leading-tight"
               autoComplete="off"
             />
+            <div className="flex items-end gap-0.5 shrink-0 self-end">
+              <button type="button" className="h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-[#5A1DE6] rounded-full transition-colors" aria-label="Attach">
+                <Plus className="h-5 w-5" />
+              </button>
+              {!content.trim() && (
+                <button type="button" className="h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-[#5A1DE6] rounded-full transition-colors" aria-label="Camera">
+                  <Camera className="h-5 w-5" />
+                </button>
+              )}
+            </div>
           </div>
-          <Button
-            type="submit"
-            size="icon"
-            disabled={!content.trim() || sendMessage.isPending}
-            className={`shrink-0 h-11 w-11 rounded-full transition-all bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] text-white border-0 hover:opacity-90 shadow-md shadow-[#5A1DE6]/30 ${content.trim() ? "scale-100 opacity-100" : "opacity-60 scale-90"}`}
-          >
-            <Send className="h-5 w-5 ml-0.5" />
-          </Button>
+          {content.trim() ? (
+            <Button
+              type="submit"
+              size="icon"
+              disabled={sendMessage.isPending}
+              className="shrink-0 h-11 w-11 rounded-full transition-all bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] text-white border-0 hover:opacity-90 shadow-md shadow-[#5A1DE6]/30"
+              aria-label="Send"
+            >
+              <Send className="h-5 w-5 ml-0.5" />
+            </Button>
+          ) : (
+            <button
+              type="button"
+              className="shrink-0 h-11 w-11 rounded-full bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] text-white shadow-md shadow-[#5A1DE6]/30 flex items-center justify-center hover:opacity-90 transition-opacity"
+              aria-label="Voice message"
+            >
+              <Mic className="h-5 w-5" />
+            </button>
+          )}
         </form>
       </div>
 
