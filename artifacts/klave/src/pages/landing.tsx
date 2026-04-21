@@ -4,9 +4,12 @@ import { MessageCircle, Wallet as WalletIcon, Sparkles, ArrowRight, Check } from
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
+const PURPLE_GRADIENT = "bg-gradient-to-r from-[#5A1DE6] to-[#3A0CA3]";
+const PURPLE_GRADIENT_HOVER = "hover:opacity-90";
+
 export default function LandingPage() {
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-br from-[hsl(40,30%,97%)] via-[hsl(160,20%,95%)] to-[hsl(40,30%,97%)]">
+    <div className="min-h-[100dvh] bg-gradient-to-br from-[#F5F5F5] via-[hsl(258,40%,96%)] to-[#F5F5F5]">
       <header className="px-6 md:px-10 py-5 flex items-center justify-between max-w-6xl mx-auto">
         <div className="flex items-center gap-2">
           <img src={`${basePath}/logo.svg`} alt="Klave" className="h-9" />
@@ -16,7 +19,7 @@ export default function LandingPage() {
             <Button variant="ghost" className="rounded-full">Sign in</Button>
           </Link>
           <Link href="/sign-up">
-            <Button className="rounded-full bg-[hsl(160,35%,45%)] hover:bg-[hsl(160,40%,40%)] text-white">
+            <Button className={`rounded-full ${PURPLE_GRADIENT} ${PURPLE_GRADIENT_HOVER} text-white border-0`}>
               Get started
             </Button>
           </Link>
@@ -26,77 +29,80 @@ export default function LandingPage() {
       <main className="max-w-6xl mx-auto px-6 md:px-10 pt-12 md:pt-20 pb-24">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div className="space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/70 border border-[hsl(40,15%,90%)] text-sm">
-              <Sparkles className="h-4 w-4 text-[hsl(160,35%,45%)]" />
-              <span className="font-medium text-[hsl(160,15%,25%)]">Built for real estate coaches</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 border border-[hsl(255,15%,90%)] text-sm shadow-sm">
+              <Sparkles className="h-4 w-4 text-[#5A1DE6]" />
+              <span className="font-medium text-[hsl(255,25%,18%)]">Built for real estate coaches</span>
             </div>
 
-            <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-[hsl(160,15%,15%)] leading-[1.05]">
+            <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-[hsl(255,25%,12%)] leading-[1.05]">
               Sell your courses in a chat your students already love.
             </h1>
 
-            <p className="text-lg text-[hsl(160,10%,40%)] leading-relaxed">
+            <p className="text-lg text-[hsl(255,8%,42%)] leading-relaxed">
               Klave is the WhatsApp-style platform built for real estate investors, wholesalers, and educators.
               Create free or paid groups, get paid instantly, and teach hundreds of students at once.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <Link href="/sign-up">
-                <Button size="lg" className="rounded-full bg-[hsl(160,35%,45%)] hover:bg-[hsl(160,40%,40%)] text-white px-7 h-12 text-base font-semibold">
+                <Button size="lg" className={`rounded-full ${PURPLE_GRADIENT} ${PURPLE_GRADIENT_HOVER} text-white border-0 px-7 h-12 text-base font-semibold shadow-lg shadow-[#5A1DE6]/25`}>
                   Start your first group
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
               <Link href="/sign-in">
-                <Button size="lg" variant="outline" className="rounded-full px-7 h-12 text-base font-semibold border-[hsl(40,15%,85%)]">
+                <Button size="lg" variant="outline" className="rounded-full px-7 h-12 text-base font-semibold border-[hsl(255,15%,85%)] bg-white/60">
                   I already have an account
                 </Button>
               </Link>
             </div>
 
-            <div className="flex flex-wrap gap-4 pt-3 text-sm text-[hsl(160,10%,40%)]">
+            <div className="flex flex-wrap gap-4 pt-3 text-sm text-[hsl(255,8%,42%)]">
               <span className="inline-flex items-center gap-1.5">
-                <Check className="h-4 w-4 text-[hsl(160,35%,45%)]" /> Free to start
+                <Check className="h-4 w-4 text-[#5A1DE6]" /> Free to start
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <Check className="h-4 w-4 text-[hsl(160,35%,45%)]" /> Instant payouts
+                <Check className="h-4 w-4 text-[#5A1DE6]" /> Instant payouts
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <Check className="h-4 w-4 text-[hsl(160,35%,45%)]" /> Built-in wallet
+                <Check className="h-4 w-4 text-[#5A1DE6]" /> Built-in wallet
               </span>
             </div>
           </div>
 
           <div className="relative">
-            <div className="absolute -inset-4 bg-gradient-to-br from-[hsl(160,35%,80%)]/40 to-[hsl(20,60%,80%)]/40 rounded-[2.5rem] blur-2xl" />
-            <div className="relative bg-white rounded-[2rem] shadow-2xl border border-[hsl(40,15%,88%)] p-6 space-y-4">
-              <div className="flex items-center gap-3 pb-3 border-b border-[hsl(40,15%,90%)]">
-                <div className="h-11 w-11 rounded-full bg-gradient-to-br from-[hsl(160,40%,55%)] to-[hsl(160,35%,40%)] flex items-center justify-center text-white font-bold">P</div>
+            <div className="absolute -inset-4 bg-gradient-to-br from-[#5A1DE6]/30 to-[#F4A300]/30 rounded-[2.5rem] blur-2xl" />
+            <div className="relative bg-white rounded-[2rem] shadow-2xl border border-[hsl(255,15%,90%)] p-6 space-y-4">
+              <div className="flex items-center gap-3 pb-3 border-b border-[hsl(255,15%,92%)]">
+                <div className="h-11 w-11 rounded-full bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] flex items-center justify-center text-white font-bold">P</div>
                 <div>
-                  <div className="font-semibold text-[hsl(160,15%,20%)]">Property Investment Mastery</div>
-                  <div className="text-xs text-[hsl(160,10%,50%)]">142 members</div>
+                  <div className="font-semibold text-[hsl(255,25%,14%)]">Property Investment Mastery</div>
+                  <div className="text-xs text-[hsl(255,8%,50%)]">142 members</div>
                 </div>
               </div>
               <div className="space-y-3">
                 <div className="flex">
-                  <div className="max-w-[80%] bg-[hsl(40,20%,94%)] rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm text-[hsl(160,15%,20%)]">
+                  <div className="max-w-[80%] bg-[hsl(0,0%,96%)] rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm text-[hsl(255,25%,18%)]">
                     What's the best way to find off-market deals?
                   </div>
                 </div>
                 <div className="flex justify-end">
-                  <div className="max-w-[80%] bg-[hsl(160,40%,55%)] rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm text-white">
+                  <div className="max-w-[80%] bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm text-white shadow-md shadow-[#5A1DE6]/20">
                     Direct mail + driving for dollars. I'll drop a full lecture in the group tomorrow.
                   </div>
                 </div>
                 <div className="flex">
-                  <div className="max-w-[80%] bg-[hsl(40,20%,94%)] rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm text-[hsl(160,15%,20%)]">
+                  <div className="max-w-[80%] bg-[hsl(0,0%,96%)] rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm text-[hsl(255,25%,18%)]">
                     Just paid! When does class start?
                   </div>
                 </div>
               </div>
-              <div className="flex items-center justify-between pt-3 mt-3 border-t border-[hsl(40,15%,90%)]">
-                <div className="text-xs text-[hsl(160,10%,50%)]">Today's earnings</div>
-                <div className="text-base font-bold text-[hsl(160,35%,40%)]">+$1,247.00</div>
+              <div className="flex items-center justify-between pt-3 mt-3 border-t border-[hsl(255,15%,92%)]">
+                <div className="text-xs text-[hsl(255,8%,50%)]">Today's earnings</div>
+                <div className="text-base font-bold text-[#5A1DE6] flex items-center gap-1.5">
+                  +$1,247.00
+                  <span className="inline-block w-2 h-2 rounded-full bg-[#F4A300]" />
+                </div>
               </div>
             </div>
           </div>
@@ -108,18 +114,18 @@ export default function LandingPage() {
             { icon: WalletIcon, title: "Get paid instantly", desc: "Students pay, get added automatically. Your wallet fills in real time." },
             { icon: Sparkles, title: "AI lecture replication", desc: "Record once. Push the same lesson to all your groups in one tap." },
           ].map((f) => (
-            <div key={f.title} className="bg-white/80 backdrop-blur rounded-2xl p-6 border border-[hsl(40,15%,90%)] shadow-sm">
-              <div className="h-11 w-11 rounded-xl bg-[hsl(160,35%,45%)]/10 flex items-center justify-center mb-4">
-                <f.icon className="h-5 w-5 text-[hsl(160,35%,40%)]" />
+            <div key={f.title} className="bg-white/90 backdrop-blur rounded-2xl p-6 border border-[hsl(255,15%,90%)] shadow-sm hover:shadow-md transition-shadow">
+              <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] flex items-center justify-center mb-4 shadow-md shadow-[#5A1DE6]/25">
+                <f.icon className="h-5 w-5 text-white" />
               </div>
-              <h3 className="font-semibold text-lg text-[hsl(160,15%,18%)] mb-2">{f.title}</h3>
-              <p className="text-sm text-[hsl(160,10%,42%)] leading-relaxed">{f.desc}</p>
+              <h3 className="font-semibold text-lg text-[hsl(255,25%,14%)] mb-2">{f.title}</h3>
+              <p className="text-sm text-[hsl(255,8%,42%)] leading-relaxed">{f.desc}</p>
             </div>
           ))}
         </div>
       </main>
 
-      <footer className="border-t border-[hsl(40,15%,90%)] py-6 text-center text-sm text-[hsl(160,10%,50%)]">
+      <footer className="border-t border-[hsl(255,15%,90%)] py-6 text-center text-sm text-[hsl(255,8%,50%)]">
         Klave — Chat. Teach. Get paid.
       </footer>
     </div>

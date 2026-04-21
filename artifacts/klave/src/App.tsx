@@ -38,13 +38,13 @@ const clerkAppearance = {
     logoImageUrl: `${window.location.origin}${basePath}/logo.svg`,
   },
   variables: {
-    colorPrimary: "hsl(160, 35%, 45%)",
-    colorBackground: "hsl(40, 30%, 99%)",
-    colorInputBackground: "hsl(40, 30%, 99%)",
-    colorText: "hsl(160, 15%, 15%)",
-    colorTextSecondary: "hsl(160, 10%, 45%)",
-    colorInputText: "hsl(160, 15%, 15%)",
-    colorNeutral: "hsl(160, 15%, 15%)",
+    colorPrimary: "#5A1DE6",
+    colorBackground: "#FFFFFF",
+    colorInputBackground: "#FFFFFF",
+    colorText: "hsl(255, 25%, 14%)",
+    colorTextSecondary: "hsl(255, 8%, 42%)",
+    colorInputText: "hsl(255, 25%, 14%)",
+    colorNeutral: "hsl(255, 25%, 14%)",
     borderRadius: "0.75rem",
     fontFamily: "Inter, system-ui, sans-serif",
     fontFamilyButtons: "Inter, system-ui, sans-serif",
@@ -52,26 +52,26 @@ const clerkAppearance = {
   },
   elements: {
     rootBox: "w-full",
-    cardBox: "border border-[hsl(40,15%,90%)] shadow-xl rounded-2xl w-full overflow-hidden bg-[hsl(40,30%,99%)]",
+    cardBox: "border border-[hsl(255,15%,90%)] shadow-xl rounded-2xl w-full overflow-hidden bg-white",
     card: "!shadow-none !border-0 !bg-transparent !rounded-none px-2",
-    footer: "!shadow-none !border-0 !bg-[hsl(40,20%,96%)] !rounded-none border-t border-[hsl(40,15%,90%)]",
+    footer: "!shadow-none !border-0 !bg-[hsl(258,30%,97%)] !rounded-none border-t border-[hsl(255,15%,90%)]",
     headerTitle: "text-2xl font-bold",
     headerSubtitle: "text-sm",
-    socialButtonsBlockButton: "border border-[hsl(40,15%,88%)] hover:bg-[hsl(40,20%,95%)] rounded-xl transition-colors",
+    socialButtonsBlockButton: "border border-[hsl(255,15%,90%)] hover:bg-[hsl(258,30%,97%)] rounded-xl transition-colors",
     socialButtonsBlockButtonText: "font-medium",
     formFieldLabel: "font-medium",
-    formFieldInput: "border border-[hsl(40,15%,88%)] rounded-xl focus:ring-2 focus:ring-[hsl(160,35%,45%)] focus:border-transparent",
-    formButtonPrimary: "bg-[hsl(160,35%,45%)] hover:bg-[hsl(160,40%,40%)] rounded-xl shadow-sm normal-case font-semibold transition-colors",
+    formFieldInput: "border border-[hsl(255,15%,90%)] rounded-xl focus:ring-2 focus:ring-[#5A1DE6] focus:border-transparent",
+    formButtonPrimary: "bg-gradient-to-r from-[#5A1DE6] to-[#3A0CA3] hover:opacity-90 rounded-xl shadow-sm normal-case font-semibold transition-opacity",
     footerAction: "py-3",
     footerActionText: "",
-    footerActionLink: "font-semibold hover:underline",
-    dividerLine: "bg-[hsl(40,15%,90%)]",
+    footerActionLink: "font-semibold hover:underline text-[#5A1DE6]",
+    dividerLine: "bg-[hsl(255,15%,90%)]",
     dividerText: "",
     identityPreviewEditButton: "",
     formFieldSuccessText: "",
     alertText: "",
     alert: "rounded-xl",
-    otpCodeFieldInput: "border border-[hsl(40,15%,88%)] rounded-xl",
+    otpCodeFieldInput: "border border-[hsl(255,15%,90%)] rounded-xl",
     formFieldRow: "",
     main: "gap-4",
     logoBox: "justify-center mb-2",
@@ -83,7 +83,7 @@ function SignInPage() {
   // To update login providers, app branding, or OAuth settings use the Auth
   // pane in the workspace toolbar. More information can be found in the Replit docs.
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-[hsl(40,30%,97%)] via-[hsl(160,20%,95%)] to-[hsl(40,30%,97%)] px-4 py-12">
+    <div className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-[#F5F5F5] via-[hsl(258,40%,96%)] to-[#F5F5F5] px-4 py-12">
       <div className="w-full max-w-md">
         <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} forceRedirectUrl={basePath || "/"} />
       </div>
@@ -95,7 +95,7 @@ function SignUpPage() {
   // To update login providers, app branding, or OAuth settings use the Auth
   // pane in the workspace toolbar. More information can be found in the Replit docs.
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-[hsl(40,30%,97%)] via-[hsl(160,20%,95%)] to-[hsl(40,30%,97%)] px-4 py-12">
+    <div className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-[#F5F5F5] via-[hsl(258,40%,96%)] to-[#F5F5F5] px-4 py-12">
       <div className="w-full max-w-md">
         <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} forceRedirectUrl={basePath || "/"} />
       </div>
