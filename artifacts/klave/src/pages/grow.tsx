@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, TrendingUp, DollarSign, Activity, Sparkles, AlertCircle, CheckCircle2, Clock, Building } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 export default function GrowPage() {
   const { data: user } = useGetCurrentUser();
@@ -50,7 +51,7 @@ export default function GrowPage() {
   return (
     <MainLayout>
       <div className="flex flex-col h-full bg-background">
-        <header className="px-4 pt-14 pb-4 bg-white/60 backdrop-blur-2xl border-b border-white/40 sticky top-0 z-10 shadow-sm">
+        <header className="px-4 pt-14 pb-4 bg-background/70 backdrop-blur-2xl border-b border-border/60 sticky top-0 z-10 shadow-sm">
           <h1 className="text-[28px] font-bold tracking-tight text-[#5A1DE6] flex items-center gap-2">
             Growth
             <span className="inline-block w-2 h-2 rounded-full bg-[#F59E0B]" />
@@ -58,6 +59,54 @@ export default function GrowPage() {
         </header>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-20">
+          {/* Revenue trend chart */}
+          <Card className="bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] border-0 shadow-xl shadow-[#5A1DE6]/25 rounded-3xl overflow-hidden text-white">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-1">
+                <div>
+                  <p className="text-[11px] font-bold tracking-widest text-white/70 uppercase">This week</p>
+                  <p className="text-3xl font-bold tracking-tight mt-1">
+                    ${dashboard?.totalEarnings?.toLocaleString() || "0"}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="inline-flex items-center gap-1 bg-[#F59E0B]/25 text-[#F59E0B] text-[11px] font-bold px-2 py-1 rounded-full">
+                    <TrendingUp className="h-3 w-3" /> +12.4%
+                  </span>
+                  <p className="text-[10px] text-white/60 mt-1">vs last week</p>
+                </div>
+              </div>
+              <div className="h-24 -mx-2 mt-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={[
+                    { d: "Mon", v: 180 },
+                    { d: "Tue", v: 240 },
+                    { d: "Wed", v: 210 },
+                    { d: "Thu", v: 380 },
+                    { d: "Fri", v: 320 },
+                    { d: "Sat", v: 470 },
+                    { d: "Sun", v: 540 },
+                  ]}>
+                    <defs>
+                      <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#F59E0B" stopOpacity={0.7} />
+                        <stop offset="100%" stopColor="#F59E0B" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <Area type="monotone" dataKey="v" stroke="#F59E0B" strokeWidth={2.5} fill="url(#rev)" />
+                    <XAxis dataKey="d" axisLine={false} tickLine={false} tick={{ fill: "rgba(255,255,255,0.6)", fontSize: 10 }} />
+                    <YAxis hide />
+                    <Tooltip
+                      contentStyle={{ background: "rgba(255,255,255,0.95)", border: "none", borderRadius: 12, color: "#1a0d33", fontSize: 12, padding: "6px 10px" }}
+                      labelStyle={{ color: "#5A1DE6", fontWeight: 600 }}
+                      formatter={(v: number) => [`$${v}`, "Revenue"]}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
           <div className="grid grid-cols-2 gap-4">
             <StatCard 
               title="Total Revenue" 

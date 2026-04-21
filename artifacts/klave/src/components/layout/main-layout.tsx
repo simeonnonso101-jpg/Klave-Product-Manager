@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { MessageCircle, Compass, Wallet, TrendingUp, LogOut } from "lucide-react";
 import { useClerk, useUser } from "@clerk/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
@@ -30,14 +31,17 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               <AvatarFallback className="bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] text-white text-xs font-bold">{initial}</AvatarFallback>
             </Avatar>
           </Link>
-          <button
-            onClick={async () => { await signOut(); setLocation("/"); }}
-            className="fixed top-3 right-3 z-50 h-10 w-10 rounded-full bg-white/60 backdrop-blur-xl border border-white/40 shadow-lg shadow-black/5 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/80 transition-all active:scale-95"
-            title="Sign out"
-            aria-label="Sign out"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
+          <div className="fixed top-3 right-3 z-50 flex items-center gap-2">
+            <ThemeToggle />
+            <button
+              onClick={async () => { await signOut(); setLocation("/"); }}
+              className="h-10 w-10 rounded-full bg-white/60 dark:bg-white/10 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-lg shadow-black/5 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/80 dark:hover:bg-white/15 transition-all active:scale-95"
+              title="Sign out"
+              aria-label="Sign out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
 
           {/* Glass navigation bar */}
           <nav className="fixed bottom-0 left-0 right-0 z-50 pb-safe pointer-events-none">

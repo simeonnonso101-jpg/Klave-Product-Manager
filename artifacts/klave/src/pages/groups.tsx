@@ -47,7 +47,7 @@ export default function GroupsPage() {
   return (
     <MainLayout>
       <div className="flex flex-col h-full">
-        <header className="px-4 pt-14 pb-4 bg-white/60 backdrop-blur-2xl border-b border-white/40 sticky top-0 z-10 shadow-sm flex flex-col gap-3">
+        <header className="px-4 pt-14 pb-4 bg-background/70 backdrop-blur-2xl border-b border-border/60 sticky top-0 z-10 shadow-sm flex flex-col gap-3">
           <div className="flex justify-between items-center">
             <h1 className="text-[28px] font-bold tracking-tight text-[#5A1DE6] flex items-center gap-2">
               Discover
@@ -65,7 +65,7 @@ export default function GroupsPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Find real estate courses, investing strategies..."
-              className="pl-10 bg-white/70 text-foreground border-white/60 focus-visible:ring-2 focus-visible:ring-[#5A1DE6]/30 rounded-xl h-10 backdrop-blur-sm"
+              className="pl-10 bg-background/70 dark:bg-card/70 text-foreground border-border/70 focus-visible:ring-2 focus-visible:ring-[#5A1DE6]/30 rounded-xl h-10 backdrop-blur-sm"
             />
           </div>
         </header>
@@ -105,10 +105,19 @@ export default function GroupsPage() {
                   </Card>
                 ))
               ) : filteredGroups?.length === 0 ? (
-                <div className="col-span-full py-12 text-center bg-card rounded-2xl border border-border shadow-sm">
-                  <Building2 className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-                  <h3 className="font-medium text-foreground">No courses found</h3>
-                  <p className="text-sm text-muted-foreground mt-1">Try adjusting your search or selected category.</p>
+                <div className="col-span-full py-14 px-6 text-center bg-card rounded-2xl border border-border shadow-sm">
+                  <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-[#5A1DE6]/10 text-[#5A1DE6] mb-4">
+                    <Building2 className="h-6 w-6" />
+                  </div>
+                  <h3 className="font-semibold text-foreground text-base">No courses match that yet</h3>
+                  <p className="text-sm text-muted-foreground mt-1.5 max-w-[340px] mx-auto leading-relaxed">
+                    Try a different search term or category. Or be the first to teach this — create a new course.
+                  </p>
+                  <Link href="/groups/new">
+                    <Button size="sm" className="mt-5 rounded-full bg-gradient-to-r from-[#5A1DE6] to-[#3A0CA3] text-white border-0 hover:opacity-90 shadow-md shadow-[#5A1DE6]/20">
+                      <Plus className="h-4 w-4 mr-1" /> Create a course
+                    </Button>
+                  </Link>
                 </div>
               ) : (
                 filteredGroups?.map((group) => (

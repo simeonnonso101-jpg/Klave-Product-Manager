@@ -1,12 +1,13 @@
 import { useListGroups, useGetCurrentUser } from "@workspace/api-client-react";
 import { Link } from "wouter";
-import { MessageCircle, Search, Compass } from "lucide-react";
+import { MessageCircle, Search, Compass, Plus } from "lucide-react";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { OnboardingDialog } from "@/components/onboarding-dialog";
 
 export default function ChatsPage() {
   const { data: user } = useGetCurrentUser();
@@ -17,8 +18,9 @@ export default function ChatsPage() {
 
   return (
     <MainLayout>
+      <OnboardingDialog />
       <div className="flex flex-col h-full bg-background">
-        <header className="px-4 pt-14 pb-4 bg-white/60 backdrop-blur-2xl border-b border-white/40 text-foreground sticky top-0 z-10 shadow-sm">
+        <header className="px-4 pt-14 pb-4 bg-background/70 backdrop-blur-2xl border-b border-border/60 text-foreground sticky top-0 z-10 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <h1 className="text-[28px] font-bold tracking-tight flex items-center gap-2 text-[#5A1DE6]">
               Chats
@@ -49,25 +51,30 @@ export default function ChatsPage() {
               </div>
             ))
           ) : groups?.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-[70vh] text-center px-6">
-              <div className="bg-primary/10 p-8 rounded-full mb-6 relative">
-                <MessageCircle className="h-12 w-12 text-primary" />
-                <div className="absolute -right-1 -bottom-1 bg-background rounded-full p-1.5">
-                  <Compass className="h-5 w-5 text-accent" />
+            <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-6 py-12">
+              <div className="relative mb-6">
+                <div className="absolute -inset-6 bg-gradient-to-br from-[#5A1DE6]/15 to-[#F59E0B]/15 rounded-full blur-2xl" />
+                <div className="relative bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] p-7 rounded-3xl shadow-xl shadow-[#5A1DE6]/30">
+                  <MessageCircle className="h-12 w-12 text-white" strokeWidth={2} />
+                  <div className="absolute -right-2 -bottom-2 bg-[#F59E0B] rounded-2xl p-2 shadow-lg shadow-[#F59E0B]/40 border-4 border-background">
+                    <Compass className="h-4 w-4 text-white" />
+                  </div>
                 </div>
               </div>
-              <h2 className="text-2xl font-bold mb-3 text-foreground tracking-tight">Your chats will live here</h2>
-              <p className="text-[15px] text-muted-foreground mb-8 max-w-[280px] leading-relaxed">
-                Discover real estate courses or create your first paid group.
+              <h2 className="text-2xl font-bold mb-2 text-foreground tracking-tight">Your chats will live here</h2>
+              <p className="text-[15px] text-muted-foreground mb-8 max-w-[300px] leading-relaxed">
+                Join a real estate course to start learning, or create your first paid group to start teaching.
               </p>
               <div className="flex flex-col gap-3 w-full max-w-[280px]">
                 <Link href="/groups">
-                  <Button className="w-full h-12 rounded-xl font-bold text-base shadow-sm">
+                  <Button className="w-full h-12 rounded-xl font-bold text-base shadow-md shadow-[#5A1DE6]/20 bg-gradient-to-r from-[#5A1DE6] to-[#3A0CA3] text-white border-0 hover:opacity-90">
+                    <Compass className="h-4 w-4 mr-2" />
                     Browse courses
                   </Button>
                 </Link>
                 <Link href="/groups/new">
                   <Button variant="outline" className="w-full h-12 rounded-xl font-bold text-base border-border">
+                    <Plus className="h-4 w-4 mr-2" />
                     Create a group
                   </Button>
                 </Link>

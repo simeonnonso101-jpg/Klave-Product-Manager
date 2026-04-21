@@ -11,6 +11,21 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
+function sameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+function formatDayLabel(d: Date) {
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (sameDay(d, today)) return "Today";
+  if (sameDay(d, yesterday)) return "Yesterday";
+  const diffMs = today.getTime() - d.getTime();
+  if (diffMs < 7 * 24 * 60 * 60 * 1000) return d.toLocaleDateString([], { weekday: "long" });
+  return d.toLocaleDateString([], { month: "short", day: "numeric", year: today.getFullYear() === d.getFullYear() ? undefined : "numeric" });
+}
+
 export default function ChatViewPage() {
   const { id } = useParams();
   const groupId = parseInt(id || "0", 10);
@@ -168,9 +183,19 @@ export default function ChatViewPage() {
           messages?.map((msg, idx) => {
             const isMe = msg.senderId === user?.id;
             const showTail = idx === messages.length - 1 || messages[idx + 1]?.senderId !== msg.senderId;
-            
+            const prev = idx > 0 ? messages[idx - 1] : null;
+            const showDateDivider = !prev || !sameDay(new Date(prev.createdAt), new Date(msg.createdAt));
+
             return (
-              <div key={msg.id} className={`flex gap-2 max-w-[85%] group/msg ${isMe ? "ml-auto flex-row-reverse" : ""}`}>
+              <div key={msg.id}>
+              {showDateDivider && (
+                <div className="flex justify-center my-3">
+                  <span className="text-[11px] font-semibold tracking-wide bg-white/80 dark:bg-card/80 backdrop-blur-md text-muted-foreground px-3 py-1 rounded-full shadow-sm border border-border/40">
+                    {formatDayLabel(new Date(msg.createdAt))}
+                  </span>
+                </div>
+              )}
+              <div className={`flex gap-2 max-w-[85%] group/msg ${isMe ? "ml-auto flex-row-reverse" : ""}`}>
                 {!isMe && showTail && (
                   <Avatar className="h-8 w-8 shrink-0 mt-auto shadow-sm">
                     <AvatarImage src={msg.sender?.avatarUrl || undefined} />
@@ -226,6 +251,7 @@ export default function ChatViewPage() {
                     </div>
                   </div>
                 </div>
+              </div>
               </div>
             );
           })

@@ -17,6 +17,10 @@ Klave is a chat-first platform enabling creators to teach, sell, and monetize kn
 - **Build**: esbuild (CJS bundle)
 - **Frontend**: React + Vite + Tailwind CSS + shadcn/ui + Framer Motion
 - **Routing**: Wouter
+- **Theming**: next-themes (light/dark, system-aware) — toggle in main-layout top-right
+- **Charts**: recharts (revenue area chart on /grow)
+- **PWA**: manifest.json + apple-touch + theme-color meta — installable on iOS/Android home screen
+- **Onboarding**: 3-step welcome dialog on first /chats visit (localStorage flag `klave_onboarded_v1`)
 
 ## Authentication
 
