@@ -71,8 +71,8 @@
   --muted: 0 0% 94%;
   --muted-foreground: 255 8% 42%;
 
-  /* Accent orange #F4A300 */
-  --accent: 40 100% 48%;
+  /* Accent orange #F59E0B - the bold logo-dot orange */
+  --accent: 38 92% 50%;
   --accent-foreground: 255 25% 14%;
 
   --destructive: 0 70% 50%;

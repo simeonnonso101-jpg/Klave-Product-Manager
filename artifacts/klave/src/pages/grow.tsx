@@ -50,8 +50,11 @@ export default function GrowPage() {
   return (
     <MainLayout>
       <div className="flex flex-col h-full bg-background">
-        <header className="px-4 pt-10 pb-4 bg-background/90 backdrop-blur-md sticky top-0 z-10">
-          <h1 className="text-[28px] font-bold tracking-tight">Growth</h1>
+        <header className="px-4 pt-14 pb-4 bg-white/60 backdrop-blur-2xl border-b border-white/40 sticky top-0 z-10 shadow-sm">
+          <h1 className="text-[28px] font-bold tracking-tight text-[#5A1DE6] flex items-center gap-2">
+            Growth
+            <span className="inline-block w-2 h-2 rounded-full bg-[#F59E0B]" />
+          </h1>
         </header>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-20">

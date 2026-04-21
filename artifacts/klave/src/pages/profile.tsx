@@ -58,7 +58,7 @@ export default function ProfilePage() {
       <div className="flex flex-col h-full bg-background">
         {/* Gradient hero header */}
         <div className="relative bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] text-white pt-14 pb-20 px-5 shadow-lg shadow-[#5A1DE6]/20 overflow-hidden">
-          <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-[#F4A300]/20 blur-3xl pointer-events-none" />
+          <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-[#F59E0B]/20 blur-3xl pointer-events-none" />
           <div className="absolute -bottom-20 -left-10 w-56 h-56 rounded-full bg-white/10 blur-3xl pointer-events-none" />
 
           <div className="relative flex items-center gap-4">
@@ -67,7 +67,7 @@ export default function ProfilePage() {
                 <AvatarImage src={clerkUser?.imageUrl || user?.avatarUrl || undefined} className="object-cover" />
                 <AvatarFallback className="bg-white/20 backdrop-blur text-white text-2xl font-bold">{initial}</AvatarFallback>
               </Avatar>
-              <span className="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full bg-[#F4A300] text-[10px] font-bold text-[hsl(255,25%,14%)] shadow-md uppercase tracking-wider">
+              <span className="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full bg-[#F59E0B] text-[10px] font-bold text-[hsl(255,25%,14%)] shadow-md uppercase tracking-wider">
                 {isCreator ? 'Pro' : 'Free'}
               </span>
             </div>
@@ -104,7 +104,7 @@ export default function ProfilePage() {
           {/* Wallet card for creators */}
           {isCreator && (
             <Card className="border-none shadow-lg shadow-[#5A1DE6]/15 rounded-2xl overflow-hidden bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] text-white mb-5 relative">
-              <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-[#F4A300]/30 blur-2xl pointer-events-none" />
+              <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-[#F59E0B]/30 blur-2xl pointer-events-none" />
               <CardContent className="p-5 relative">
                 <div className="flex items-center justify-between">
                   <div>
@@ -115,7 +115,7 @@ export default function ProfilePage() {
                     <p className="text-3xl font-bold">${user?.walletBalance?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || '0.00'}</p>
                     <p className="text-xs text-white/70 mt-1">Available to withdraw</p>
                   </div>
-                  <span className="inline-block w-3 h-3 rounded-full bg-[#F4A300] shadow-lg shadow-[#F4A300]/50 animate-pulse" />
+                  <span className="inline-block w-3 h-3 rounded-full bg-[#F59E0B] shadow-lg shadow-[#F59E0B]/50 animate-pulse" />
                 </div>
               </CardContent>
             </Card>
@@ -183,8 +183,8 @@ export default function ProfilePage() {
               onClick={() => toast({ title: "Coming soon", description: "Notification preferences will be available soon." })}
               className="w-full flex items-center gap-3 px-5 py-4 hover:bg-muted/50 transition-colors"
             >
-              <div className="h-9 w-9 rounded-lg bg-[#F4A300]/15 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-[#F4A300]" />
+              <div className="h-9 w-9 rounded-lg bg-[#F59E0B]/15 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-[#F59E0B]" />
               </div>
               <div className="flex-1 text-left">
                 <div className="font-semibold text-foreground text-sm">Notifications</div>

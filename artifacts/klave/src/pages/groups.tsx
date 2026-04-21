@@ -47,22 +47,25 @@ export default function GroupsPage() {
   return (
     <MainLayout>
       <div className="flex flex-col h-full">
-        <header className="px-4 pt-10 pb-4 bg-primary text-primary-foreground sticky top-0 z-10 shadow-sm flex flex-col gap-4">
+        <header className="px-4 pt-14 pb-4 bg-white/60 backdrop-blur-2xl border-b border-white/40 sticky top-0 z-10 shadow-sm flex flex-col gap-3">
           <div className="flex justify-between items-center">
-            <h1 className="text-[28px] font-bold tracking-tight">Discover</h1>
+            <h1 className="text-[28px] font-bold tracking-tight text-[#5A1DE6] flex items-center gap-2">
+              Discover
+              <span className="inline-block w-2 h-2 rounded-full bg-[#F59E0B]" />
+            </h1>
             <Link href="/groups/new">
-              <Button size="sm" variant="secondary" className="gap-1.5 rounded-full font-semibold bg-background text-foreground hover:bg-background/90">
+              <Button size="sm" className="gap-1.5 rounded-full font-semibold bg-gradient-to-r from-[#5A1DE6] to-[#3A0CA3] text-white border-0 hover:opacity-90 shadow-md shadow-[#5A1DE6]/25">
                 <Plus className="h-4 w-4" /> New Course
               </Button>
             </Link>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground" />
-            <Input 
+            <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Find real estate courses, investing strategies..." 
-              className="pl-10 bg-background text-foreground border-none focus-visible:ring-0 rounded-xl h-10 shadow-inner"
+              placeholder="Find real estate courses, investing strategies..."
+              className="pl-10 bg-white/70 text-foreground border-white/60 focus-visible:ring-2 focus-visible:ring-[#5A1DE6]/30 rounded-xl h-10 backdrop-blur-sm"
             />
           </div>
         </header>

@@ -71,7 +71,7 @@ export default function LandingPage() {
           </div>
 
           <div className="relative">
-            <div className="absolute -inset-4 bg-gradient-to-br from-[#5A1DE6]/30 to-[#F4A300]/30 rounded-[2.5rem] blur-2xl" />
+            <div className="absolute -inset-4 bg-gradient-to-br from-[#5A1DE6]/30 to-[#F59E0B]/30 rounded-[2.5rem] blur-2xl" />
             <div className="relative bg-white rounded-[2rem] shadow-2xl border border-[hsl(255,15%,90%)] p-6 space-y-4">
               <div className="flex items-center gap-3 pb-3 border-b border-[hsl(255,15%,92%)]">
                 <div className="h-11 w-11 rounded-full bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] flex items-center justify-center text-white font-bold">P</div>
@@ -101,7 +101,7 @@ export default function LandingPage() {
                 <div className="text-xs text-[hsl(255,8%,50%)]">Today's earnings</div>
                 <div className="text-base font-bold text-[#5A1DE6] flex items-center gap-1.5">
                   +$1,247.00
-                  <span className="inline-block w-2 h-2 rounded-full bg-[#F4A300]" />
+                  <span className="inline-block w-2 h-2 rounded-full bg-[#F59E0B]" />
                 </div>
               </div>
             </div>
