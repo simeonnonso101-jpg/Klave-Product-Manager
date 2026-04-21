@@ -76,24 +76,27 @@ export default function WalletPage() {
 
   return (
     <MainLayout>
-      <div className="flex flex-col h-full bg-background">
-        <header className="px-4 pt-14 pb-4 sticky top-0 z-10 bg-white/60 backdrop-blur-2xl border-b border-white/40 shadow-sm">
-          <h1 className="text-[28px] font-bold tracking-tight text-[#5A1DE6] flex items-center gap-2">
-            Wallet
-            <span className="inline-block w-2 h-2 rounded-full bg-[#F59E0B]" />
+      <div className="relative flex flex-col h-full bg-background overflow-hidden">
+        <div className="pointer-events-none absolute -top-32 -right-32 w-80 h-80 rounded-full bg-gradient-to-br from-[#5A1DE6]/20 to-[#3A0CA3]/10 blur-3xl" />
+        <div className="pointer-events-none absolute top-1/3 -left-32 w-72 h-72 rounded-full bg-gradient-to-tr from-[#F59E0B]/10 to-transparent blur-3xl" />
+
+        <header className="relative px-4 pt-14 pb-4 sticky top-0 z-10 bg-background/60 backdrop-blur-2xl border-b border-border/60">
+          <h1 className="text-[28px] font-bold tracking-tight flex items-center gap-2">
+            <span className="bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] bg-clip-text text-transparent">Wallet</span>
+            <span className="inline-block w-2 h-2 rounded-full bg-[#F59E0B] mt-1" />
           </h1>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-20">
+        <div className="relative flex-1 overflow-y-auto p-4 space-y-6 pb-20">
           {/* Main Balance Card */}
-          <Card className="bg-gradient-to-br from-[#F59E0B] via-[#F59E0B] to-[#D97706] text-white border-none overflow-hidden relative shadow-lg shadow-[#F59E0B]/25 rounded-3xl">
-            <div className="absolute -top-12 -right-8 w-48 h-48 rounded-full bg-white/15 blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-16 -left-10 w-56 h-56 rounded-full bg-[#5A1DE6]/20 blur-3xl pointer-events-none" />
+          <Card className="bg-gradient-to-br from-[#5A1DE6] via-[#4318B8] to-[#3A0CA3] text-white border-none overflow-hidden relative shadow-xl shadow-[#5A1DE6]/30 rounded-3xl">
+            <div className="absolute -top-12 -right-8 w-48 h-48 rounded-full bg-[#F59E0B]/25 blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-16 -left-10 w-56 h-56 rounded-full bg-white/10 blur-3xl pointer-events-none" />
             <div className="absolute top-[-20%] right-[-10%] opacity-10 rotate-12 pointer-events-none">
               <WalletIcon className="w-48 h-48" />
             </div>
             <CardHeader className="pb-2 pt-6 relative">
-              <CardTitle className="text-xs sm:text-sm font-medium text-white/90 uppercase tracking-widest">Available Balance</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium text-white/85 uppercase tracking-widest">Available Balance</CardTitle>
             </CardHeader>
             <CardContent className="pb-6 relative">
               {isLoadingSummary ? (
@@ -106,7 +109,7 @@ export default function WalletPage() {
               <div className="mt-6 sm:mt-8">
                 <Dialog open={isWithdrawOpen} onOpenChange={setIsWithdrawOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="secondary" className="w-full h-12 rounded-xl font-bold bg-white text-[#D97706] hover:bg-white/95 shadow-md text-[16px]">
+                    <Button variant="secondary" className="w-full h-12 rounded-xl font-bold bg-white text-[#5A1DE6] hover:bg-white/95 shadow-md text-[16px]">
                       <Building className="mr-2 h-5 w-5" /> Withdraw to Bank
                     </Button>
                   </DialogTrigger>
