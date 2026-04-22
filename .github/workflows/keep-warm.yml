@@ -1,0 +1,39 @@
+name: Keep API warm
+
+on:
+  schedule:
+    # Every 10 minutes. Render free-tier dynos sleep after 15 minutes of
+    # inactivity, so a 10-minute ping comfortably keeps the API hot.
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: keep-warm
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Ping API health endpoint
+        env:
+          API_URL: https://klave-api.onrender.com/api/healthz
+        run: |
+          echo "Pinging $API_URL"
+          # Retry up to 3 times with a 20s connect / 90s total budget so a
+          # single cold start doesn't fail the job.
+          for attempt in 1 2 3; do
+            status=$(curl -s -o /tmp/resp.txt -w "%{http_code}" \
+              --connect-timeout 20 --max-time 90 "$API_URL" || echo "000")
+            echo "Attempt $attempt → HTTP $status"
+            if [ "$status" = "200" ]; then
+              echo "Awake."
+              cat /tmp/resp.txt
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Health check failed after 3 attempts."
+          cat /tmp/resp.txt || true
+          exit 1
