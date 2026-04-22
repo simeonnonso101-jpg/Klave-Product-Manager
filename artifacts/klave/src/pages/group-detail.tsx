@@ -1,6 +1,6 @@
 import { useGetGroup, useGetGroupStats, useListGroupMembers, useGetCurrentUser, useCreatePayment, useAddGroupMember, useUpdateGroup, useListUsers, getGetGroupQueryKey, getListGroupMembersQueryKey, getListGroupsQueryKey } from "@workspace/api-client-react";
 import { useParams, Link, useLocation } from "wouter";
-import { ArrowLeft, Users, ShieldCheck, CreditCard, Settings, Loader2, UserPlus, MessageCircle, Building2 } from "lucide-react";
+import { ArrowLeft, Users, ShieldCheck, CreditCard, Settings, Loader2, UserPlus, MessageCircle, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -14,9 +14,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
-import defaultImg1 from "../assets/real-estate-1.png";
-import defaultImg2 from "../assets/real-estate-2.png";
-import defaultImg3 from "../assets/real-estate-3.png";
+import defaultImg1 from "../assets/course-1.png";
+import defaultImg2 from "../assets/course-2.png";
+import defaultImg3 from "../assets/course-3.png";
 
 export default function GroupDetailPage() {
   const { id } = useParams();
@@ -225,10 +225,10 @@ export default function GroupDetailPage() {
 
         <section className="space-y-2 bg-card p-5 rounded-2xl border border-border shadow-sm">
           <h3 className="font-semibold text-lg flex items-center gap-2 text-foreground">
-            <Building2 className="h-5 w-5 text-muted-foreground" /> About this course
+            <BookOpen className="h-5 w-5 text-muted-foreground" /> About this course
           </h3>
           <p className="text-muted-foreground leading-relaxed text-[15px]">
-            {group.description || "Learn proven real estate strategies and connect with other investors."}
+            {group.description || "Learn from this creator and connect with a community of students."}
           </p>
         </section>
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useListGroups } from "@workspace/api-client-react";
 import { Link } from "wouter";
-import { Search, Users, Plus, Star, Building2, TrendingUp } from "lucide-react";
+import { Search, Users, Plus, Star, GraduationCap, TrendingUp, Briefcase, Megaphone, Palette, Code2 } from "lucide-react";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// Using our generated real estate images as fallbacks
-import defaultImg1 from "../assets/real-estate-1.png";
-import defaultImg2 from "../assets/real-estate-2.png";
-import defaultImg3 from "../assets/real-estate-3.png";
+// Generic course cover images used as fallbacks
+import defaultImg1 from "../assets/course-1.png";
+import defaultImg2 from "../assets/course-2.png";
+import defaultImg3 from "../assets/course-3.png";
 
 export default function GroupsPage() {
   const { data: groups, isLoading } = useListGroups();
@@ -38,10 +38,12 @@ export default function GroupsPage() {
   });
 
   const categories = [
-    { label: "Real Estate", icon: <Building2 className="w-3.5 h-3.5 mr-1.5" /> },
-    { label: "Investing", icon: <TrendingUp className="w-3.5 h-3.5 mr-1.5" /> },
-    { label: "Wholesaling", icon: null },
-    { label: "Property Mgmt", icon: null }
+    { label: "Business", icon: <Briefcase className="w-3.5 h-3.5 mr-1.5" /> },
+    { label: "Marketing", icon: <Megaphone className="w-3.5 h-3.5 mr-1.5" /> },
+    { label: "Design", icon: <Palette className="w-3.5 h-3.5 mr-1.5" /> },
+    { label: "Coding", icon: <Code2 className="w-3.5 h-3.5 mr-1.5" /> },
+    { label: "Finance", icon: <TrendingUp className="w-3.5 h-3.5 mr-1.5" /> },
+    { label: "Coaching", icon: <GraduationCap className="w-3.5 h-3.5 mr-1.5" /> },
   ];
 
   return (
@@ -67,7 +69,7 @@ export default function GroupsPage() {
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Find real estate courses, investing strategies..."
+              placeholder="Find courses, mentors, topics..."
               className="pl-10 bg-card/80 text-foreground border-border/60 focus-visible:ring-2 focus-visible:ring-[#5A1DE6]/30 rounded-2xl h-11 backdrop-blur-sm shadow-sm"
             />
           </div>
@@ -110,7 +112,7 @@ export default function GroupsPage() {
               ) : filteredGroups?.length === 0 ? (
                 <div className="col-span-full py-14 px-6 text-center bg-card rounded-2xl border border-border shadow-sm">
                   <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-[#5A1DE6]/10 text-[#5A1DE6] mb-4">
-                    <Building2 className="h-6 w-6" />
+                    <GraduationCap className="h-6 w-6" />
                   </div>
                   <h3 className="font-semibold text-foreground text-base">No courses match that yet</h3>
                   <p className="text-sm text-muted-foreground mt-1.5 max-w-[340px] mx-auto leading-relaxed">
@@ -144,7 +146,7 @@ export default function GroupsPage() {
                       </div>
                       <CardContent className="p-4 flex-1 flex flex-col">
                         <p className="text-sm text-muted-foreground line-clamp-2 mb-4 flex-1">
-                          {group.description || group.subject || "Learn proven real estate strategies and connect with other investors."}
+                          {group.description || group.subject || "Learn from a creator and connect with a community of students."}
                         </p>
                         <div className="flex items-center justify-between mt-auto pt-3 border-t border-border/50">
                           <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">

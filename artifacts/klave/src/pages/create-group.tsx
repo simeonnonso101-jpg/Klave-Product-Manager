@@ -1,6 +1,6 @@
 import { useCreateGroup, useGetCurrentUser, getListGroupsQueryKey } from "@workspace/api-client-react";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Loader2, Image as ImageIcon, CheckCircle2, Lock, Sparkles, Building2, TrendingUp, Home, Briefcase, GraduationCap, Check } from "lucide-react";
+import { ArrowLeft, Loader2, Image as ImageIcon, CheckCircle2, Lock, Sparkles, Megaphone, TrendingUp, Palette, Briefcase, GraduationCap, Check, Code2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,9 +13,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-import defaultImg1 from "../assets/real-estate-1.png";
-import defaultImg2 from "../assets/real-estate-2.png";
-import defaultImg3 from "../assets/real-estate-3.png";
+import defaultImg1 from "../assets/course-1.png";
+import defaultImg2 from "../assets/course-2.png";
+import defaultImg3 from "../assets/course-3.png";
 
 type CoverChoice =
   | { kind: "preset"; src: string; label: string }
@@ -23,17 +23,18 @@ type CoverChoice =
   | { kind: "url"; url: string };
 
 const PRESET_COVERS: CoverChoice[] = [
-  { kind: "preset", src: defaultImg1, label: "Modern Home" },
-  { kind: "preset", src: defaultImg2, label: "City Skyline" },
-  { kind: "preset", src: defaultImg3, label: "Investment" },
+  { kind: "preset", src: defaultImg1, label: "Cover 1" },
+  { kind: "preset", src: defaultImg2, label: "Cover 2" },
+  { kind: "preset", src: defaultImg3, label: "Cover 3" },
 ];
 
 const GRADIENT_COVERS: CoverChoice[] = [
-  { kind: "gradient", from: "#5A1DE6", via: "#4318B8", to: "#3A0CA3", icon: <Building2 className="w-12 h-12" />, label: "Property" },
-  { kind: "gradient", from: "#F59E0B", via: "#D97706", to: "#B45309", icon: <TrendingUp className="w-12 h-12" />, label: "Investing" },
-  { kind: "gradient", from: "#10B981", via: "#059669", to: "#047857", icon: <Home className="w-12 h-12" />, label: "Wholesaling" },
-  { kind: "gradient", from: "#EC4899", via: "#DB2777", to: "#9D174D", icon: <Briefcase className="w-12 h-12" />, label: "Business" },
-  { kind: "gradient", from: "#3B82F6", via: "#2563EB", to: "#1D4ED8", icon: <GraduationCap className="w-12 h-12" />, label: "Education" },
+  { kind: "gradient", from: "#5A1DE6", via: "#4318B8", to: "#3A0CA3", icon: <Briefcase className="w-12 h-12" />, label: "Business" },
+  { kind: "gradient", from: "#F59E0B", via: "#D97706", to: "#B45309", icon: <Megaphone className="w-12 h-12" />, label: "Marketing" },
+  { kind: "gradient", from: "#10B981", via: "#059669", to: "#047857", icon: <TrendingUp className="w-12 h-12" />, label: "Finance" },
+  { kind: "gradient", from: "#EC4899", via: "#DB2777", to: "#9D174D", icon: <Palette className="w-12 h-12" />, label: "Design" },
+  { kind: "gradient", from: "#3B82F6", via: "#2563EB", to: "#1D4ED8", icon: <Code2 className="w-12 h-12" />, label: "Coding" },
+  { kind: "gradient", from: "#8B5CF6", via: "#7C3AED", to: "#6D28D9", icon: <GraduationCap className="w-12 h-12" />, label: "Coaching" },
 ];
 
 export default function CreateGroupPage() {
@@ -50,7 +51,7 @@ export default function CreateGroupPage() {
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    subject: "Real Estate",
+    subject: "Business",
     description: "",
     price: "",
     subscriptionModel: "monthly",
@@ -244,7 +245,7 @@ export default function CreateGroupPage() {
                 <Label htmlFor="name" className="text-sm font-semibold text-foreground">Course name <span className="text-[#F59E0B]">*</span></Label>
                 <Input
                   id="name"
-                  placeholder="e.g. Property Investment Mastery"
+                  placeholder="e.g. Productivity Mastery"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
@@ -259,12 +260,18 @@ export default function CreateGroupPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Real Estate">Real Estate</SelectItem>
-                    <SelectItem value="Investing">Investing</SelectItem>
-                    <SelectItem value="Wholesaling">Wholesaling</SelectItem>
-                    <SelectItem value="Property Management">Property Management</SelectItem>
                     <SelectItem value="Business">Business</SelectItem>
-                    <SelectItem value="Education">Education</SelectItem>
+                    <SelectItem value="Marketing">Marketing</SelectItem>
+                    <SelectItem value="Design">Design</SelectItem>
+                    <SelectItem value="Coding">Coding</SelectItem>
+                    <SelectItem value="Finance">Finance</SelectItem>
+                    <SelectItem value="Coaching">Coaching</SelectItem>
+                    <SelectItem value="Wellness">Wellness</SelectItem>
+                    <SelectItem value="Languages">Languages</SelectItem>
+                    <SelectItem value="Music">Music</SelectItem>
+                    <SelectItem value="Photography">Photography</SelectItem>
+                    <SelectItem value="Cooking">Cooking</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

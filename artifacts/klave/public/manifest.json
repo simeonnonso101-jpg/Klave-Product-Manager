@@ -1,7 +1,7 @@
 {
   "name": "Klave",
   "short_name": "Klave",
-  "description": "Chat. Teach. Get paid. The chat-first platform for real estate course creators.",
+  "description": "Chat. Teach. Get paid. The chat-first platform for course creators.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

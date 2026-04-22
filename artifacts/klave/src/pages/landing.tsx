@@ -24,21 +24,21 @@ const TESTIMONIALS = [
     quote:
       "I moved my entire student community from Telegram to Klave in one weekend. Payments now happen in the chat itself.",
     name: "Marcus Tate",
-    role: "Real Estate Coach · 320 students",
+    role: "Business Coach · 320 students",
     initial: "M",
   },
   {
     quote:
       "The AI replication feature is unfair. I record one lesson and it goes out — adapted — to every one of my paid groups.",
     name: "Lola Adediran",
-    role: "Wholesaling Mentor · 184 students",
+    role: "Marketing Mentor · 184 students",
     initial: "L",
   },
   {
     quote:
       "My students felt the difference immediately. It feels like WhatsApp but I get paid in it.",
     name: "Devon Ochoa",
-    role: "Property Investor · 91 students",
+    role: "Design Educator · 91 students",
     initial: "D",
   },
 ];
@@ -99,7 +99,7 @@ export default function LandingPage() {
           <div className="space-y-5 sm:space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 border border-[hsl(255,15%,90%)] text-xs sm:text-sm shadow-sm">
               <Sparkles className="h-4 w-4 text-[#5A1DE6]" />
-              <span className="font-medium text-[hsl(255,25%,18%)]">Built for real estate coaches</span>
+              <span className="font-medium text-[hsl(255,25%,18%)]">Built for course creators</span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-[hsl(255,25%,12%)] leading-[1.05]">
@@ -107,7 +107,7 @@ export default function LandingPage() {
             </h1>
 
             <p className="text-base sm:text-lg text-[hsl(255,8%,42%)] leading-relaxed">
-              Klave is the WhatsApp-style platform built for real estate investors, wholesalers, and educators.
+              Klave is the WhatsApp-style platform built for coaches, mentors, and educators of every kind.
               Create free or paid groups, get paid instantly, and teach hundreds of students at once.
             </p>
 
@@ -154,19 +154,19 @@ export default function LandingPage() {
                   P
                 </div>
                 <div>
-                  <div className="font-semibold text-[hsl(255,25%,14%)]">Property Investment Mastery</div>
+                  <div className="font-semibold text-[hsl(255,25%,14%)]">Productivity Mastery</div>
                   <div className="text-xs text-[hsl(255,8%,50%)]">142 members</div>
                 </div>
               </div>
               <div className="space-y-3">
                 <div className="flex">
                   <div className="max-w-[80%] bg-[hsl(0,0%,96%)] rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm text-[hsl(255,25%,18%)]">
-                    What's the best way to find off-market deals?
+                    What's the best framework for week-one of a new launch?
                   </div>
                 </div>
                 <div className="flex justify-end">
                   <div className="max-w-[80%] bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm text-white shadow-md shadow-[#5A1DE6]/20">
-                    Direct mail + driving for dollars. I'll drop a full lecture in the group tomorrow.
+                    Audience-first, then offer. I'll drop a full lecture in the group tomorrow.
                   </div>
                 </div>
                 <div className="flex">
@@ -231,7 +231,7 @@ export default function LandingPage() {
               Loved by creators
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[hsl(255,25%,12%)]">
-              Real coaches. Real revenue.
+              Real creators. Real revenue.
             </h2>
             <p className="text-[hsl(255,8%,42%)] mt-3 text-base sm:text-lg">
               Hundreds of educators have already moved their students to Klave.

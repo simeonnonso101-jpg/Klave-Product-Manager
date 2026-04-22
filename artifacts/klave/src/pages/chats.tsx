@@ -94,7 +94,7 @@ export default function ChatsPage() {
               </div>
               <h2 className="text-2xl font-bold mb-2 text-foreground tracking-tight">Your chats will live here</h2>
               <p className="text-[15px] text-muted-foreground mb-8 max-w-[300px] leading-relaxed">
-                Join a real estate course to start learning, or create your first paid group to start teaching.
+                Join a course to start learning, or create your first paid group to start teaching.
               </p>
               <div className="flex flex-col gap-3 w-full max-w-[280px]">
                 <Link href="/groups">
@@ -213,7 +213,7 @@ export default function ChatsPage() {
                           <div className="flex-1 min-w-0">
                             <h3 className="font-bold text-[15px] text-foreground truncate">{group.name}</h3>
                             <p className="text-[12.5px] text-muted-foreground truncate">
-                              {group.subject || group.description || "Real estate course"}
+                              {group.subject || group.description || "Course"}
                             </p>
                             <div className="flex items-center gap-3 mt-1.5">
                               <span className="flex items-center gap-1 text-[11px] text-muted-foreground font-medium">
