@@ -42,6 +42,10 @@ router.get("/groups", async (req, res): Promise<void> => {
   }
   if (query.data.type != null) {
     conditions.push(eq(groupsTable.type, query.data.type));
+  } else {
+    // Direct-message groups (stored as type='personal' with name 'dm:*')
+    // must never leak into class/explore listings.
+    conditions.push(sql`${groupsTable.type} <> 'personal'`);
   }
   if ((query.data as any).memberId != null) {
     const memberId = (query.data as any).memberId as number;

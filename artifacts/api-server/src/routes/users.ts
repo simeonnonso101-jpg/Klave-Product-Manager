@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, usersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, ilike, or, ne, and, sql } from "drizzle-orm";
 import { getAuth, clerkClient } from "@clerk/express";
 import {
   CreateUserBody,
@@ -21,6 +21,54 @@ router.get("/users", async (_req, res): Promise<void> => {
     bio: u.bio ?? null,
   }));
   res.json(ListUsersResponse.parse(parsed));
+});
+
+/**
+ * Search users by name or email. Excludes the authenticated user from results
+ * so the UI never offers "DM yourself". Returns at most 20 hits, ordered by
+ * shortest name (rough proxy for closer match) then alphabetically.
+ */
+router.get("/users/search", async (req, res): Promise<void> => {
+  const auth = getAuth(req);
+  const clerkUserId = auth?.userId;
+  if (!clerkUserId) {
+    res.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+  const [me] = await db
+    .select({ id: usersTable.id })
+    .from(usersTable)
+    .where(eq(usersTable.clerkUserId, clerkUserId))
+    .limit(1);
+
+  const qRaw = String(req.query.q ?? "").trim();
+  if (qRaw.length < 1) {
+    res.json([]);
+    return;
+  }
+  const needle = `%${qRaw}%`;
+
+  const baseFilter = me
+    ? and(
+        ne(usersTable.id, me.id),
+        or(ilike(usersTable.name, needle), ilike(usersTable.email, needle)),
+      )
+    : or(ilike(usersTable.name, needle), ilike(usersTable.email, needle));
+
+  const rows = await db
+    .select({
+      id: usersTable.id,
+      name: usersTable.name,
+      email: usersTable.email,
+      avatarUrl: usersTable.avatarUrl,
+      role: usersTable.role,
+    })
+    .from(usersTable)
+    .where(baseFilter)
+    .orderBy(sql`length(${usersTable.name})`, usersTable.name)
+    .limit(20);
+
+  res.json(rows.map((r) => ({ ...r, avatarUrl: r.avatarUrl ?? null })));
 });
 
 router.get("/users/me", async (req, res): Promise<void> => {

@@ -1,6 +1,7 @@
-import { useListGroups, useGetCurrentUser } from "@workspace/api-client-react";
+import { useListGroups, useGetCurrentUser, customFetch } from "@workspace/api-client-react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { MessageCircle, Search, Compass, Plus, Sparkles, TrendingUp, Users, ArrowRight } from "lucide-react";
+import { MessageCircle, Search, Compass, Plus, Sparkles, TrendingUp, Users, ArrowRight, PenSquare } from "lucide-react";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -22,15 +23,45 @@ export default function ChatsPage() {
   );
   const [searchTerm, setSearchTerm] = useState("");
 
-  const myGroupIds = new Set((myGroups ?? []).map((g) => g.id));
-  const filteredMyGroups = (myGroups ?? []).filter((g) =>
-    g.name.toLowerCase().includes(searchTerm.toLowerCase())
+  // Direct-message threads come from a dedicated endpoint that resolves the
+  // peer + last preview server-side, so we don't have to fetch members per row.
+  type DmThread = {
+    groupId: number;
+    updatedAt: string;
+    otherUserId: number;
+    otherUserName: string;
+    otherUserAvatarUrl: string | null;
+    lastMessageContent: string | null;
+    lastMessageAt: string | null;
+  };
+  const { data: dmThreads } = useQuery<DmThread[]>({
+    queryKey: ["direct-chats"],
+    enabled: !!user,
+    queryFn: () => customFetch<DmThread[]>("/api/direct-chats", { method: "GET" }),
+    staleTime: 15_000,
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
+  });
+
+  // /chats list shows class/cohort groups; DMs (stored as type='personal'
+  // with a 'dm:*' name) render in their own section above.
+  const classGroups = (myGroups ?? []).filter(
+    (g) => !(g.type === "personal" && g.name.startsWith("dm:")),
   );
+  const myGroupIds = new Set(classGroups.map((g) => g.id));
+
+  const term = searchTerm.toLowerCase();
+  const filteredMyGroups = classGroups.filter((g) => g.name.toLowerCase().includes(term));
+  const filteredDms = (dmThreads ?? []).filter((d) =>
+    d.otherUserName.toLowerCase().includes(term),
+  );
+
   const suggestedGroups = (allGroups ?? [])
-    .filter((g) => !myGroupIds.has(g.id))
+    .filter((g) => g.type !== "personal" && !myGroupIds.has(g.id))
     .slice(0, 3);
 
-  const showSuggestions = !isLoading && myGroups && myGroups.length > 0 && myGroups.length < 5 && suggestedGroups.length > 0;
+  const showSuggestions = !isLoading && classGroups.length > 0 && classGroups.length < 5 && suggestedGroups.length > 0;
+  const hasAnyChats = filteredMyGroups.length > 0 || filteredDms.length > 0;
 
   return (
     <MainLayout>
@@ -47,12 +78,19 @@ export default function ChatsPage() {
                 <span className="bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] bg-clip-text text-transparent">Chats</span>
                 <span className="inline-block w-2 h-2 rounded-full bg-[#F59E0B] mt-1" />
               </h1>
-              {myGroups && myGroups.length > 0 && (
+              {(classGroups.length > 0 || (dmThreads?.length ?? 0) > 0) && (
                 <p className="text-[13px] text-muted-foreground mt-0.5">
-                  {myGroups.length} {myGroups.length === 1 ? "conversation" : "conversations"}
+                  {classGroups.length + (dmThreads?.length ?? 0)} {(classGroups.length + (dmThreads?.length ?? 0)) === 1 ? "conversation" : "conversations"}
                 </p>
               )}
             </div>
+            <Link
+              href="/people"
+              aria-label="Start a new direct message"
+              className="h-10 w-10 inline-flex items-center justify-center rounded-full bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] text-white shadow-md shadow-[#5A1DE6]/30 hover:opacity-90 active:scale-95 transition-all"
+            >
+              <PenSquare className="h-[18px] w-[18px]" />
+            </Link>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground" />
@@ -81,7 +119,7 @@ export default function ChatsPage() {
                 </div>
               ))}
             </div>
-          ) : myGroups?.length === 0 ? (
+          ) : classGroups.length === 0 && (dmThreads?.length ?? 0) === 0 ? (
             <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-6 py-12">
               <div className="relative mb-6">
                 <div className="absolute -inset-6 bg-gradient-to-br from-[#5A1DE6]/15 to-[#F59E0B]/15 rounded-full blur-2xl" />
@@ -97,14 +135,20 @@ export default function ChatsPage() {
                 Join a course to start learning, or create your first paid group to start teaching.
               </p>
               <div className="flex flex-col gap-3 w-full max-w-[280px]">
-                <Link href="/groups">
+                <Link href="/people">
                   <Button className="w-full h-12 rounded-xl font-bold text-base shadow-md shadow-[#5A1DE6]/20 bg-gradient-to-r from-[#5A1DE6] to-[#3A0CA3] text-white border-0 hover:opacity-90">
+                    <PenSquare className="h-4 w-4 mr-2" />
+                    Message someone
+                  </Button>
+                </Link>
+                <Link href="/groups">
+                  <Button variant="outline" className="w-full h-12 rounded-xl font-bold text-base border-border">
                     <Compass className="h-4 w-4 mr-2" />
                     Browse courses
                   </Button>
                 </Link>
                 <Link href="/groups/new">
-                  <Button variant="outline" className="w-full h-12 rounded-xl font-bold text-base border-border">
+                  <Button variant="ghost" className="w-full h-12 rounded-xl font-bold text-base">
                     <Plus className="h-4 w-4 mr-2" />
                     Create a group
                   </Button>
@@ -114,7 +158,58 @@ export default function ChatsPage() {
           ) : (
             <>
               <div className="bg-card/60 backdrop-blur-sm">
-                {filteredMyGroups.length === 0 ? (
+                {filteredDms.length > 0 && (
+                  <>
+                    <div className="px-4 pt-4 pb-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Direct messages
+                    </div>
+                    {filteredDms.map((dm) => {
+                      const ts = dm.lastMessageAt ?? dm.updatedAt;
+                      const when = ts
+                        ? new Date(ts).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+                        : "";
+                      return (
+                        <Link
+                          key={`dm-${dm.groupId}`}
+                          href={`/chat/${dm.groupId}`}
+                          onMouseEnter={() => { import("@/pages/chat-view"); }}
+                          onTouchStart={() => { import("@/pages/chat-view"); }}
+                          className="group relative flex items-center gap-3.5 px-4 py-3.5 border-b border-border/40 hover:bg-muted/40 transition-all cursor-pointer active:bg-muted"
+                        >
+                          <div className="relative shrink-0">
+                            <Avatar className="h-[56px] w-[56px] border border-border">
+                              <AvatarImage src={dm.otherUserAvatarUrl || undefined} className="object-cover" />
+                              <AvatarFallback className="bg-gradient-to-br from-[#5A1DE6]/15 to-[#F59E0B]/15 text-[#5A1DE6] font-bold text-lg">
+                                {dm.otherUserName.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          </div>
+                          <div className="flex-1 min-w-0 py-0.5 flex flex-col justify-center gap-1">
+                            <div className="flex justify-between items-baseline gap-2">
+                              <h3 className="truncate text-[16px] font-semibold text-foreground">
+                                {dm.otherUserName}
+                              </h3>
+                              {when && (
+                                <span className="text-[12px] whitespace-nowrap shrink-0 text-muted-foreground">
+                                  {when}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[14px] truncate pr-1 text-muted-foreground">
+                              {dm.lastMessageContent ?? "Say hi"}
+                            </p>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                    {filteredMyGroups.length > 0 && (
+                      <div className="px-4 pt-4 pb-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                        Classes
+                      </div>
+                    )}
+                  </>
+                )}
+                {filteredMyGroups.length === 0 && filteredDms.length === 0 ? (
                   <div className="px-6 py-12 text-center text-muted-foreground text-sm">
                     No chats matching "{searchTerm}"
                   </div>

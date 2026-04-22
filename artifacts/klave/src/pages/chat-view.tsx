@@ -1,4 +1,4 @@
-import { useGetGroup, useGetGroupStats, useListMessages, useSendMessage, useDeleteMessage, useReplicateLecture, useListGroups, useGetCurrentUser, getListMessagesQueryKey, getListReplicationJobsQueryKey } from "@workspace/api-client-react";
+import { useGetGroup, useGetGroupStats, useListMessages, useSendMessage, useDeleteMessage, useReplicateLecture, useListGroups, useGetCurrentUser, getListMessagesQueryKey, getListReplicationJobsQueryKey, useListGroupMembers } from "@workspace/api-client-react";
 import { useParams, Link, useLocation } from "wouter";
 import { ArrowLeft, Send, Sparkles, Image as ImageIcon, Trash2, Copy, Loader2, Smile, Mic, Plus, Camera, ChevronDown, CheckCheck, Check } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
@@ -40,6 +40,17 @@ export default function ChatViewPage() {
   });
   
   const { data: stats } = useGetGroupStats(groupId, { query: { enabled: !!groupId } as any });
+
+  // For direct-message groups we need to render the OTHER participant in
+  // the header. DMs are stored as type='personal' with a deterministic
+  // "dm:<a>:<b>" name. Only fetch members for DMs to avoid an extra hop.
+  const isDmGroup = group?.type === "personal" && (group?.name ?? "").startsWith("dm:");
+  const { data: dmMembers } = useListGroupMembers(groupId, {
+    query: { enabled: !!groupId && isDmGroup } as any,
+  });
+  const dmPeer = isDmGroup
+    ? dmMembers?.find((m: any) => m.userId !== user?.id)?.user
+    : null;
   
   // Realtime first: Pusher pushes new messages via the subscription below.
   // Polling stays at 30s as a quiet safety net in case the websocket drops or
@@ -258,6 +269,13 @@ export default function ChatViewPage() {
   const isCreator = user?.id === group.creatorId;
   const otherGroups = groups?.filter(g => g.id !== groupId) || [];
 
+  // Display values: for DMs, swap the canonical "dm:<a>:<b>" name and the
+  // group's cover image with the actual peer's name and avatar.
+  const isDm = group.type === "personal" && group.name.startsWith("dm:");
+  const displayName = isDm ? (dmPeer?.name ?? "Direct message") : group.name;
+  const displayAvatar = isDm ? (dmPeer?.avatarUrl ?? null) : (group.coverImageUrl ?? null);
+  const displayInitial = (isDm ? (dmPeer?.name ?? "?") : group.name).charAt(0).toUpperCase();
+
   return (
     <div className="flex flex-col h-[100dvh] bg-[hsl(258,30%,97%)] dark:bg-[hsl(258,18%,7%)] relative overflow-hidden">
       {/* Subtle purple-dot background pattern (light) */}
@@ -271,16 +289,19 @@ export default function ChatViewPage() {
           <Link href="/chats" className="p-2 rounded-full hover:bg-muted text-foreground transition-colors flex items-center shrink-0">
             <ArrowLeft className="h-5 w-5" />
           </Link>
-          <div onClick={() => setLocation(`/groups/${group.id}`)} className="flex items-center gap-3 cursor-pointer p-1 rounded-xl hover:bg-muted transition-colors min-w-0 flex-1">
+          <div
+            onClick={() => { if (!isDm) setLocation(`/groups/${group.id}`); }}
+            className={`flex items-center gap-3 p-1 rounded-xl transition-colors min-w-0 flex-1 ${isDm ? "" : "cursor-pointer hover:bg-muted"}`}
+          >
             <div className="relative shrink-0">
               <Avatar className="h-10 w-10 border border-border">
-                <AvatarImage src={group.coverImageUrl || undefined} />
-                <AvatarFallback className="bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] text-white font-bold">{group.name.charAt(0)}</AvatarFallback>
+                <AvatarImage src={displayAvatar || undefined} />
+                <AvatarFallback className="bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] text-white font-bold">{displayInitial}</AvatarFallback>
               </Avatar>
               <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white dark:border-[hsl(258,18%,10%)]" />
             </div>
             <div className="flex flex-col min-w-0">
-              <h2 className="text-base font-semibold leading-tight truncate">{group.name}</h2>
+              <h2 className="text-base font-semibold leading-tight truncate">{displayName}</h2>
               {typingNames.length > 0 ? (
                 <span className="text-xs text-[#5A1DE6] dark:text-[#9B7BFF] mt-0.5 truncate font-medium flex items-center gap-1.5">
                   {typingNames.length === 1
@@ -296,7 +317,11 @@ export default function ChatViewPage() {
                 </span>
               ) : (
                 <span className="text-xs text-muted-foreground mt-0.5 truncate">
-                  <span className="text-emerald-600 font-medium">● Active</span> • {stats?.memberCount || group.memberCount || 1} members
+                  {isDm ? (
+                    <><span className="text-emerald-600 font-medium">● Direct message</span></>
+                  ) : (
+                    <><span className="text-emerald-600 font-medium">● Active</span> • {stats?.memberCount || group.memberCount || 1} members</>
+                  )}
                 </span>
               )}
             </div>

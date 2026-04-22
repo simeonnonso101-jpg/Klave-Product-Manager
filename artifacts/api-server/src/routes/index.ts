@@ -8,6 +8,7 @@ import walletRouter from "./wallet";
 import aiRouter from "./ai";
 import dashboardRouter from "./dashboard";
 import realtimeRouter from "./realtime";
+import directChatsRouter from "./directChats";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use(walletRouter);
 router.use(aiRouter);
 router.use(dashboardRouter);
 router.use(realtimeRouter);
+router.use(directChatsRouter);
 
 export default router;
