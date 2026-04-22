@@ -1,50 +1,139 @@
-import { useState } from "react";
-import { useListGroups } from "@workspace/api-client-react";
-import { Link } from "wouter";
-import { Search, Users, Plus, Star, GraduationCap, TrendingUp, Briefcase, Megaphone, Palette, Code2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { customFetch } from "@workspace/api-client-react";
+import { Link, useLocation } from "wouter";
+import {
+  Search, Users, Plus, Star, GraduationCap, TrendingUp, Briefcase,
+  Megaphone, Palette, Code2, Sparkles, Flame, Gift, Loader2, Check,
+} from "lucide-react";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
 
-// Generic course cover images used as fallbacks
 import defaultImg1 from "../assets/course-1.png";
 import defaultImg2 from "../assets/course-2.png";
 import defaultImg3 from "../assets/course-3.png";
 
+type DiscoverItem = {
+  id: number;
+  name: string;
+  description: string | null;
+  subject: string | null;
+  price: number | null;
+  subscriptionModel: string | null;
+  memberCount: number;
+  coverImageUrl: string | null;
+  createdAt: string;
+  creator: {
+    id: number;
+    name: string;
+    username: string | null;
+    avatarUrl: string | null;
+  };
+  isMember: boolean;
+  isCreator: boolean;
+};
+
+type DiscoverResp = { items: DiscoverItem[]; nextOffset: number | null };
+type SortKey = "trending" | "new" | "free";
+
+const CATEGORIES = [
+  { label: "Business", icon: <Briefcase className="w-3.5 h-3.5 mr-1.5" /> },
+  { label: "Marketing", icon: <Megaphone className="w-3.5 h-3.5 mr-1.5" /> },
+  { label: "Design", icon: <Palette className="w-3.5 h-3.5 mr-1.5" /> },
+  { label: "Coding", icon: <Code2 className="w-3.5 h-3.5 mr-1.5" /> },
+  { label: "Finance", icon: <TrendingUp className="w-3.5 h-3.5 mr-1.5" /> },
+  { label: "Coaching", icon: <GraduationCap className="w-3.5 h-3.5 mr-1.5" /> },
+];
+
+const SORTS: Array<{ key: SortKey; label: string; icon: React.ReactNode }> = [
+  { key: "trending", label: "Trending", icon: <Flame className="w-3.5 h-3.5" /> },
+  { key: "new", label: "New", icon: <Sparkles className="w-3.5 h-3.5" /> },
+  { key: "free", label: "Free", icon: <Gift className="w-3.5 h-3.5" /> },
+];
+
+function useDebounced<T>(value: T, delayMs: number): T {
+  const [d, setD] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setD(value), delayMs);
+    return () => clearTimeout(t);
+  }, [value, delayMs]);
+  return d;
+}
+
 export default function GroupsPage() {
-  const { data: groups, isLoading } = useListGroups();
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const qc = useQueryClient();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [sort, setSort] = useState<SortKey>("trending");
+  const debouncedQ = useDebounced(searchQuery.trim(), 250);
 
-  const getFallbackImage = (id: number) => {
-    const images = [defaultImg1, defaultImg2, defaultImg3];
-    return images[id % images.length];
-  };
+  const queryKey = useMemo(
+    () => ["discover", { q: debouncedQ, category: activeCategory, sort }] as const,
+    [debouncedQ, activeCategory, sort],
+  );
 
-  const filteredGroups = groups?.filter((group) => {
-    const q = searchQuery.toLowerCase();
-    const matchesSearch = !q || 
-      group.name.toLowerCase().includes(q) || 
-      (group.subject && group.subject.toLowerCase().includes(q)) || 
-      (group.description && group.description.toLowerCase().includes(q));
-      
-    const matchesCategory = !activeCategory || 
-      (group.subject && group.subject.toLowerCase().includes(activeCategory.toLowerCase()));
-
-    return matchesSearch && matchesCategory;
+  const { data, isLoading, isFetching } = useQuery<DiscoverResp>({
+    queryKey,
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (debouncedQ) params.set("q", debouncedQ);
+      if (activeCategory) params.set("category", activeCategory);
+      params.set("sort", sort);
+      return customFetch<DiscoverResp>(`/api/groups/discover?${params.toString()}`, { method: "GET" });
+    },
+    staleTime: 15_000,
   });
 
-  const categories = [
-    { label: "Business", icon: <Briefcase className="w-3.5 h-3.5 mr-1.5" /> },
-    { label: "Marketing", icon: <Megaphone className="w-3.5 h-3.5 mr-1.5" /> },
-    { label: "Design", icon: <Palette className="w-3.5 h-3.5 mr-1.5" /> },
-    { label: "Coding", icon: <Code2 className="w-3.5 h-3.5 mr-1.5" /> },
-    { label: "Finance", icon: <TrendingUp className="w-3.5 h-3.5 mr-1.5" /> },
-    { label: "Coaching", icon: <GraduationCap className="w-3.5 h-3.5 mr-1.5" /> },
-  ];
+  const join = useMutation({
+    mutationFn: (groupId: number) =>
+      customFetch<{ joined: boolean; alreadyMember: boolean }>(
+        `/api/groups/${groupId}/join`,
+        { method: "POST" },
+      ),
+    onSuccess: (_resp, groupId) => {
+      // Optimistically flip isMember on the cached list so the button switches
+      // to "Joined" without waiting for the next fetch.
+      qc.setQueryData<DiscoverResp>(queryKey, (prev) =>
+        prev
+          ? {
+              ...prev,
+              items: prev.items.map((it) =>
+                it.id === groupId
+                  ? { ...it, isMember: true, memberCount: it.isMember ? it.memberCount : it.memberCount + 1 }
+                  : it,
+              ),
+            }
+          : prev,
+      );
+      toast({ title: "You're in", description: "Welcome to the class — say hi in chat." });
+    },
+    onError: (err: any, groupId) => {
+      // 402 = paid class → redirect to detail page where checkout lives.
+      const msg = String(err?.message ?? "");
+      if (msg.toLowerCase().includes("paid")) {
+        setLocation(`/groups/${groupId}`);
+        return;
+      }
+      toast({
+        title: "Couldn't join",
+        description: msg || "Please try again in a moment.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const items = data?.items ?? [];
+
+  const fallback = (id: number) => [defaultImg1, defaultImg2, defaultImg3][id % 3];
 
   return (
     <MainLayout>
@@ -75,10 +164,31 @@ export default function GroupsPage() {
           </div>
         </header>
 
-        <div className="relative flex-1 overflow-y-auto p-4 space-y-6 pb-20">
+        <div className="relative flex-1 overflow-y-auto p-4 space-y-5 pb-24">
+          {/* Sort tabs */}
+          <div className="flex gap-2">
+            {SORTS.map((s) => {
+              const active = sort === s.key;
+              return (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => setSort(s.key)}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[13px] font-bold rounded-full border transition-all ${
+                    active
+                      ? "bg-foreground text-background border-transparent shadow-md"
+                      : "bg-card text-muted-foreground border-border/60 hover:text-foreground"
+                  }`}
+                >
+                  {s.icon} {s.label}
+                </button>
+              );
+            })}
+          </div>
+
           {/* Categories row */}
-          <div className="flex overflow-x-auto gap-2 pb-2 -mx-4 px-4 scrollbar-hide">
-            {categories.map((cat) => (
+          <div className="flex overflow-x-auto gap-2 -mx-4 px-4 scrollbar-hide">
+            {CATEGORIES.map((cat) => (
               <button
                 key={cat.label}
                 type="button"
@@ -96,12 +206,15 @@ export default function GroupsPage() {
 
           <section>
             <h2 className="text-sm font-semibold text-muted-foreground mb-4 flex items-center gap-2 uppercase tracking-wide">
-              <Star className="h-4 w-4 text-[#F59E0B]" /> Featured Courses
+              <Star className="h-4 w-4 text-[#F59E0B]" />
+              {sort === "trending" ? "Trending now" : sort === "new" ? "Just launched" : "Free to join"}
+              {isFetching && !isLoading && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
             </h2>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {isLoading ? (
                 Array.from({ length: 4 }).map((_, i) => (
-                  <Card key={i} className="bg-card border-none shadow-sm overflow-hidden">
+                  <Card key={i} className="bg-card border-none shadow-sm overflow-hidden rounded-2xl">
                     <Skeleton className="h-36 w-full rounded-none" />
                     <CardContent className="p-4 space-y-2">
                       <Skeleton className="h-5 w-3/4" />
@@ -109,7 +222,7 @@ export default function GroupsPage() {
                     </CardContent>
                   </Card>
                 ))
-              ) : filteredGroups?.length === 0 ? (
+              ) : items.length === 0 ? (
                 <div className="col-span-full py-14 px-6 text-center bg-card rounded-2xl border border-border shadow-sm">
                   <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-[#5A1DE6]/10 text-[#5A1DE6] mb-4">
                     <GraduationCap className="h-6 w-6" />
@@ -125,41 +238,101 @@ export default function GroupsPage() {
                   </Link>
                 </div>
               ) : (
-                filteredGroups?.map((group) => (
-                  <Link key={group.id} href={`/groups/${group.id}`}>
-                    <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow overflow-hidden group cursor-pointer h-full flex flex-col rounded-2xl">
-                      <div className="h-36 bg-muted relative overflow-hidden">
-                        <img 
-                          src={group.coverImageUrl || getFallbackImage(group.id)} 
-                          alt={group.name} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                        <div className="absolute top-3 right-3 flex gap-2">
-                          <Badge className="bg-background/95 text-foreground hover:bg-background border-none font-semibold shadow-sm backdrop-blur-sm">
-                            {group.price ? `$${group.price}` : "Free"}
-                          </Badge>
-                        </div>
-                        <div className="absolute bottom-3 left-3 right-3">
-                           <h3 className="font-bold text-lg text-white leading-tight drop-shadow-sm">{group.name}</h3>
-                        </div>
-                      </div>
-                      <CardContent className="p-4 flex-1 flex flex-col">
-                        <p className="text-sm text-muted-foreground line-clamp-2 mb-4 flex-1">
-                          {group.description || group.subject || "Learn from a creator and connect with a community of students."}
-                        </p>
-                        <div className="flex items-center justify-between mt-auto pt-3 border-t border-border/50">
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
-                            <Users className="h-3.5 w-3.5" /> {group.memberCount} enrolled
+                items.map((g) => {
+                  const pending = join.isPending && join.variables === g.id;
+                  const priceLabel = g.price && g.price > 0 ? `$${g.price.toFixed(g.price % 1 === 0 ? 0 : 2)}` : "Free";
+                  return (
+                    <Card key={g.id} className="bg-card border-border shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col rounded-2xl">
+                      <Link href={`/groups/${g.id}`} className="block group">
+                        <div className="h-36 bg-muted relative overflow-hidden">
+                          <img
+                            src={g.coverImageUrl || fallback(g.id)}
+                            alt={g.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
+                          <div className="absolute top-3 right-3 flex gap-2">
+                            <Badge className="bg-background/95 text-foreground hover:bg-background border-none font-semibold shadow-sm backdrop-blur-sm">
+                              {priceLabel}
+                            </Badge>
+                            {g.subject && (
+                              <Badge className="bg-[#5A1DE6]/90 text-white border-none font-semibold shadow-sm backdrop-blur-sm">
+                                {g.subject}
+                              </Badge>
+                            )}
                           </div>
-                          <span className="text-xs font-bold text-primary flex items-center gap-1 group-hover:underline">
-                            View Course
-                          </span>
+                          <div className="absolute bottom-3 left-3 right-3">
+                            <h3 className="font-bold text-lg text-white leading-tight drop-shadow-sm line-clamp-2">{g.name}</h3>
+                          </div>
+                        </div>
+                      </Link>
+                      <CardContent className="p-4 flex-1 flex flex-col gap-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Avatar className="h-7 w-7 shrink-0 border border-border">
+                            <AvatarImage src={g.creator.avatarUrl || undefined} className="object-cover" />
+                            <AvatarFallback className="bg-gradient-to-br from-[#5A1DE6]/15 to-[#F59E0B]/15 text-[#5A1DE6] text-[11px] font-bold">
+                              {g.creator.name.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <p className="text-[12.5px] font-semibold text-foreground truncate leading-tight">
+                              {g.creator.name}
+                            </p>
+                            {g.creator.username && (
+                              <p className="text-[11px] text-muted-foreground truncate leading-tight">
+                                @{g.creator.username}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <p className="text-sm text-muted-foreground line-clamp-2 flex-1">
+                          {g.description || g.subject || "Learn from a creator and connect with a community of students."}
+                        </p>
+
+                        <div className="flex items-center justify-between pt-3 border-t border-border/50">
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                            <Users className="h-3.5 w-3.5" /> {g.memberCount} enrolled
+                          </div>
+                          {g.isCreator ? (
+                            <Link href={`/groups/${g.id}`}>
+                              <Button size="sm" variant="outline" className="h-8 rounded-full text-[12px] font-bold">
+                                Manage
+                              </Button>
+                            </Link>
+                          ) : g.isMember ? (
+                            <Link href={`/groups/${g.id}`}>
+                              <Button size="sm" variant="outline" className="h-8 rounded-full text-[12px] font-bold gap-1 border-emerald-500/50 text-emerald-700 dark:text-emerald-400">
+                                <Check className="h-3.5 w-3.5" /> Joined
+                              </Button>
+                            </Link>
+                          ) : (
+                            <Button
+                              size="sm"
+                              disabled={pending}
+                              onClick={() => {
+                                if (g.price && g.price > 0) {
+                                  setLocation(`/groups/${g.id}`);
+                                } else {
+                                  join.mutate(g.id);
+                                }
+                              }}
+                              className="h-8 px-4 rounded-full text-[12px] font-bold bg-gradient-to-r from-[#5A1DE6] to-[#3A0CA3] text-white border-0 hover:opacity-90 shadow-sm shadow-[#5A1DE6]/25"
+                            >
+                              {pending ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : g.price && g.price > 0 ? (
+                                `Join · ${priceLabel}`
+                              ) : (
+                                "Join free"
+                              )}
+                            </Button>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
-                  </Link>
-                ))
+                  );
+                })
               )}
             </div>
           </section>

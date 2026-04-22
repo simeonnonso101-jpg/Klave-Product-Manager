@@ -9,11 +9,16 @@ import aiRouter from "./ai";
 import dashboardRouter from "./dashboard";
 import realtimeRouter from "./realtime";
 import directChatsRouter from "./directChats";
+import discoverRouter from "./discover";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use(usersRouter);
+// IMPORTANT: discoverRouter must be registered before groupsRouter so that
+// "/groups/discover" matches the literal route and isn't swallowed by
+// "/groups/:id" (which would parse "discover" as a numeric id and 400).
+router.use(discoverRouter);
 router.use(groupsRouter);
 router.use(messagesRouter);
 router.use(paymentsRouter);
