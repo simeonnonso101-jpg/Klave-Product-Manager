@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 type SearchUser = {
   id: number;
   name: string;
+  username: string | null;
   email: string;
   avatarUrl: string | null;
   role: string;
@@ -91,7 +92,7 @@ export default function PeoplePage() {
               autoFocus
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search people..."
+              placeholder="Search by name, email or @username"
               className="pl-10 bg-card/80 text-foreground placeholder:text-muted-foreground border-border/60 focus-visible:ring-2 focus-visible:ring-[#5A1DE6]/30 rounded-2xl h-11 backdrop-blur-sm shadow-sm"
             />
           </div>
@@ -147,7 +148,9 @@ export default function PeoplePage() {
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <h3 className="truncate text-[15.5px] font-semibold text-foreground">{u.name}</h3>
-                      <p className="truncate text-[12.5px] text-muted-foreground">{u.email}</p>
+                      <p className="truncate text-[12.5px] text-muted-foreground">
+                        {u.username ? `@${u.username}` : u.email}
+                      </p>
                     </div>
                     {pending ? (
                       <Loader2 className="h-4 w-4 text-[#5A1DE6] animate-spin shrink-0" />

@@ -1,39 +1,89 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, Link } from "wouter";
-import { useGetCurrentUser, useUpdateCurrentUser } from "@workspace/api-client-react";
+import { useGetCurrentUser, useUpdateCurrentUser, customFetch } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useClerk, useUser } from "@clerk/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Check, Loader2, GraduationCap, Users } from "lucide-react";
+import { ArrowLeft, Check, Loader2, GraduationCap, Users, Camera, AtSign, X } from "lucide-react";
+
+const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
+
+type CheckResp = { available: boolean; reason: "ok" | "self" | "taken" | "invalid" };
 
 export default function ProfileEditPage() {
   const [, setLocation] = useLocation();
-  const { data: user, isLoading } = useGetCurrentUser();
+  const { data: user, isLoading, refetch } = useGetCurrentUser();
   const updateProfile = useUpdateCurrentUser();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { openUserProfile } = useClerk();
+  const { user: clerkUser } = useUser();
 
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [role, setRole] = useState<"creator" | "student">("student");
   const [hydrated, setHydrated] = useState(false);
 
+  const [checkState, setCheckState] = useState<"idle" | "checking" | "ok" | "taken" | "invalid">("idle");
+  const checkSeqRef = useRef(0);
+
   useEffect(() => {
     if (user && !hydrated) {
       setName(user.name || "");
+      setUsername(((user as any).username as string | null) || "");
       setBio(user.bio || "");
       setRole((user.role as any) === "creator" ? "creator" : "student");
       setHydrated(true);
     }
   }, [user, hydrated]);
 
+  // Live availability check, debounced. Invalid client-side patterns short-circuit
+  // before we hit the network.
+  useEffect(() => {
+    const trimmed = username.trim();
+    const original = ((user as any)?.username as string | null) || "";
+    if (!trimmed) {
+      setCheckState("idle");
+      return;
+    }
+    if (!USERNAME_RE.test(trimmed)) {
+      setCheckState("invalid");
+      return;
+    }
+    if (trimmed.toLowerCase() === original.toLowerCase()) {
+      setCheckState("ok");
+      return;
+    }
+    setCheckState("checking");
+    const seq = ++checkSeqRef.current;
+    const t = setTimeout(async () => {
+      try {
+        const resp = await customFetch<CheckResp>(`/api/users/check-username?u=${encodeURIComponent(trimmed)}`, { method: "GET" });
+        if (seq !== checkSeqRef.current) return;
+        setCheckState(resp.available ? "ok" : (resp.reason === "invalid" ? "invalid" : "taken"));
+      } catch {
+        if (seq !== checkSeqRef.current) return;
+        setCheckState("idle");
+      }
+    }, 350);
+    return () => clearTimeout(t);
+  }, [username, user]);
+
+  const originalUsername = ((user as any)?.username as string | null) || "";
+  const usernameChanged = username.trim() !== originalUsername;
+  const usernameOk = !usernameChanged || (USERNAME_RE.test(username.trim()) && checkState === "ok");
+
   const dirty = !!user && (
     name !== (user.name || "") ||
     bio !== (user.bio || "") ||
-    role !== ((user.role as any) === "creator" ? "creator" : "student")
+    role !== ((user.role as any) === "creator" ? "creator" : "student") ||
+    usernameChanged
   );
 
   const handleSave = (e?: React.FormEvent) => {
@@ -43,17 +93,45 @@ export default function ProfileEditPage() {
       toast({ title: "Name is required", variant: "destructive" });
       return;
     }
-    updateProfile.mutate({ data: { name: name.trim(), bio: bio.trim(), role } as any }, {
+    if (usernameChanged && username.trim() && !USERNAME_RE.test(username.trim())) {
+      toast({ title: "Invalid username", description: "3–20 letters, numbers or underscore.", variant: "destructive" });
+      return;
+    }
+    if (usernameChanged && checkState === "taken") {
+      toast({ title: "Username taken", description: "Try a different one.", variant: "destructive" });
+      return;
+    }
+
+    const payload: Record<string, unknown> = { name: name.trim(), bio: bio.trim(), role };
+    if (usernameChanged) payload.username = username.trim() || null;
+
+    updateProfile.mutate({ data: payload as any }, {
       onSuccess: (updated) => {
         queryClient.setQueryData(['/api/users/me'], updated);
         toast({ title: "Profile updated", description: "Your changes have been saved." });
         setLocation("/profile");
       },
-      onError: () => {
-        toast({ title: "Couldn't save", description: "Please check your connection and try again.", variant: "destructive" });
+      onError: (err: any) => {
+        const msg = err?.message?.includes("taken") ? "That username is taken." : "Please check your connection and try again.";
+        toast({ title: "Couldn't save", description: msg, variant: "destructive" });
       },
     });
   };
+
+  const handleChangePicture = () => {
+    try {
+      openUserProfile();
+      // When the Clerk modal closes the user may have changed their avatar.
+      // We pull /users/me again on focus; the GET handler syncs from Clerk.
+      const onFocus = () => { refetch(); window.removeEventListener("focus", onFocus); };
+      window.addEventListener("focus", onFocus);
+    } catch {
+      toast({ title: "Couldn't open picture editor", variant: "destructive" });
+    }
+  };
+
+  const avatarSrc = clerkUser?.imageUrl || user?.avatarUrl || undefined;
+  const initial = (name?.[0] || user?.name?.[0] || "K").toUpperCase();
 
   return (
     <div className="relative flex flex-col h-[100dvh] bg-background">
@@ -65,7 +143,7 @@ export default function ProfileEditPage() {
         <Button
           type="button"
           onClick={() => handleSave()}
-          disabled={!dirty || updateProfile.isPending || isLoading}
+          disabled={!dirty || !usernameOk || updateProfile.isPending || isLoading}
           className="h-9 px-4 mr-2 rounded-full bg-gradient-to-r from-[#5A1DE6] to-[#3A0CA3] text-white border-0 hover:opacity-90 disabled:opacity-50 shadow-sm shadow-[#5A1DE6]/20"
         >
           {updateProfile.isPending ? (
@@ -77,6 +155,31 @@ export default function ProfileEditPage() {
       </header>
 
       <form onSubmit={handleSave} className="flex-1 overflow-y-auto px-4 pt-6 pb-32 space-y-6 max-w-screen-md mx-auto w-full">
+        <section className="flex flex-col items-center gap-3">
+          <button
+            type="button"
+            onClick={handleChangePicture}
+            className="relative group focus:outline-none"
+            aria-label="Change profile picture"
+          >
+            <span className="absolute -inset-[3px] rounded-full bg-gradient-to-br from-[#5A1DE6] to-[#F59E0B]" />
+            <Avatar className="relative h-[88px] w-[88px] ring-2 ring-background">
+              <AvatarImage src={avatarSrc} className="object-cover" />
+              <AvatarFallback className="bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] text-white text-3xl font-bold">{initial}</AvatarFallback>
+            </Avatar>
+            <span className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-foreground text-background flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
+              <Camera className="h-4 w-4" />
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={handleChangePicture}
+            className="text-[13px] font-semibold text-[#5A1DE6] dark:text-[#9F75FF] hover:underline"
+          >
+            Change picture
+          </button>
+        </section>
+
         <section className="space-y-2">
           <Label htmlFor="name" className="font-semibold text-foreground text-sm">Full name</Label>
           <Input
@@ -86,8 +189,38 @@ export default function ProfileEditPage() {
             disabled={isLoading}
             className="h-12 rounded-xl border-border/60 text-base"
             placeholder="Your full name"
-            autoFocus
           />
+        </section>
+
+        <section className="space-y-2">
+          <Label htmlFor="username" className="font-semibold text-foreground text-sm">Username</Label>
+          <div className="relative">
+            <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value.replace(/^@+/, ""))}
+              disabled={isLoading}
+              maxLength={20}
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+              className="h-12 pl-9 pr-10 rounded-xl border-border/60 text-base"
+              placeholder="yourname"
+            />
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              {checkState === "checking" && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+              {checkState === "ok" && <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
+              {(checkState === "taken" || checkState === "invalid") && <X className="h-4 w-4 text-red-500" />}
+            </div>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            {checkState === "taken"
+              ? "That username is taken."
+              : checkState === "invalid"
+                ? "3–20 letters, numbers or underscore."
+                : "Friends can find you by name, email or @username."}
+          </p>
         </section>
 
         <section className="space-y-2">
@@ -148,7 +281,7 @@ export default function ProfileEditPage() {
         </section>
 
         <p className="text-[12px] text-muted-foreground pt-2">
-          Tap <span className="font-semibold text-foreground">Save</span> at the top when you're done. We'll bring you back to your profile.
+          Tap <span className="font-semibold text-foreground">Save</span> at the top when you're done.
         </p>
       </form>
     </div>

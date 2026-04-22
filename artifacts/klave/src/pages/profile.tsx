@@ -49,7 +49,10 @@ export default function ProfilePage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <h2 className="text-xl font-bold text-foreground leading-tight truncate">{user?.name || clerkUser?.fullName || 'Loading...'}</h2>
-                  <p className="text-sm text-muted-foreground truncate mt-0.5">{user?.email || clerkUser?.primaryEmailAddress?.emailAddress}</p>
+                  {(user as any)?.username ? (
+                    <p className="text-sm text-[#5A1DE6] dark:text-[#9F75FF] font-semibold truncate mt-0.5">@{(user as any).username}</p>
+                  ) : null}
+                  <p className="text-xs text-muted-foreground truncate mt-0.5">{user?.email || clerkUser?.primaryEmailAddress?.emailAddress}</p>
                   <div className="flex items-center gap-2 mt-2">
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-gradient-to-r from-[#5A1DE6] to-[#3A0CA3] text-white text-[10px] font-bold uppercase tracking-wider shadow-sm shadow-[#5A1DE6]/30">
                       {isCreator ? 'Pro Creator' : 'Free'}

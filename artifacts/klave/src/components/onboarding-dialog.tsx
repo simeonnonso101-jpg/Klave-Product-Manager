@@ -1,10 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Sparkles, Wallet as WalletIcon, ArrowRight, Check, GraduationCap, Users, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { MessageCircle, Sparkles, Wallet as WalletIcon, ArrowRight, Check, GraduationCap, Users, Loader2, AtSign, X } from "lucide-react";
 import { Link } from "wouter";
-import { useGetCurrentUser, useUpdateCurrentUser } from "@workspace/api-client-react";
+import { useGetCurrentUser, useUpdateCurrentUser, customFetch } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+
+const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
+type CheckResp = { available: boolean; reason: "ok" | "self" | "taken" | "invalid" };
 
 const STORAGE_KEY = "klave_onboarded_v2";
 
@@ -34,8 +38,12 @@ export function OnboardingDialog() {
   const updateProfile = useUpdateCurrentUser();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [step, setStep] = useState<"role" | number>("role");
+  const [step, setStep] = useState<"role" | "username" | number>("role");
   const [savingRole, setSavingRole] = useState<"creator" | "student" | null>(null);
+  const [username, setUsername] = useState("");
+  const [checkState, setCheckState] = useState<"idle" | "checking" | "ok" | "taken" | "invalid">("idle");
+  const [savingUsername, setSavingUsername] = useState(false);
+  const checkSeqRef = useRef(0);
 
   useEffect(() => {
     if (!user) return;
@@ -56,6 +64,13 @@ export function OnboardingDialog() {
     setOpen(false);
   };
 
+  const goAfterRole = () => {
+    // If the user already has a username (e.g. they're going through onboarding
+    // a second time after clearing localStorage), skip straight to the intro.
+    const existing = ((user as any)?.username as string | null) || "";
+    setStep(existing ? 0 : "username");
+  };
+
   const pickRole = (role: "creator" | "student") => {
     if (savingRole) return;
     setSavingRole(role);
@@ -63,12 +78,49 @@ export function OnboardingDialog() {
       onSuccess: (updated) => {
         queryClient.setQueryData(['/api/users/me'], updated);
         setSavingRole(null);
-        setStep(0);
+        goAfterRole();
       },
       onError: () => {
         setSavingRole(null);
         // Still let them through — we don't want to block onboarding on a network blip.
+        goAfterRole();
+      },
+    });
+  };
+
+  // Live availability check, debounced.
+  useEffect(() => {
+    const trimmed = username.trim();
+    if (!trimmed) { setCheckState("idle"); return; }
+    if (!USERNAME_RE.test(trimmed)) { setCheckState("invalid"); return; }
+    setCheckState("checking");
+    const seq = ++checkSeqRef.current;
+    const t = setTimeout(async () => {
+      try {
+        const resp = await customFetch<CheckResp>(`/api/users/check-username?u=${encodeURIComponent(trimmed)}`, { method: "GET" });
+        if (seq !== checkSeqRef.current) return;
+        setCheckState(resp.available ? "ok" : (resp.reason === "invalid" ? "invalid" : "taken"));
+      } catch {
+        if (seq !== checkSeqRef.current) return;
+        setCheckState("idle");
+      }
+    }, 350);
+    return () => clearTimeout(t);
+  }, [username]);
+
+  const submitUsername = () => {
+    const trimmed = username.trim();
+    if (!trimmed || !USERNAME_RE.test(trimmed) || checkState === "taken" || savingUsername) return;
+    setSavingUsername(true);
+    updateProfile.mutate({ data: { username: trimmed } as any }, {
+      onSuccess: (updated) => {
+        queryClient.setQueryData(['/api/users/me'], updated);
+        setSavingUsername(false);
         setStep(0);
+      },
+      onError: () => {
+        setSavingUsername(false);
+        setCheckState("taken");
       },
     });
   };
@@ -82,7 +134,67 @@ export function OnboardingDialog() {
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) finish(); }}>
       <DialogContent className="sm:max-w-[460px] p-0 overflow-hidden border-0 rounded-3xl">
-        {step === "role" ? (
+        {step === "username" ? (
+          <div className="bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] p-7 text-white">
+            <div className="text-center mb-5">
+              <div className="inline-flex h-14 w-14 rounded-2xl bg-white/15 backdrop-blur items-center justify-center mb-3">
+                <AtSign className="h-7 w-7 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold tracking-tight">Pick a username</h2>
+              <p className="text-white/85 mt-2 text-sm">
+                Friends can find you by name, email or @username. You can change it later.
+              </p>
+            </div>
+            <div className="space-y-3">
+              <div className="relative">
+                <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/70" />
+                <Input
+                  autoFocus
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.replace(/^@+/, ""))}
+                  maxLength={20}
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  placeholder="yourname"
+                  className="h-12 pl-9 pr-10 bg-white/10 border-white/30 text-white placeholder:text-white/50 focus-visible:ring-2 focus-visible:ring-white/40 rounded-xl text-base"
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  {checkState === "checking" && <Loader2 className="h-4 w-4 animate-spin text-white/70" />}
+                  {checkState === "ok" && <Check className="h-4 w-4 text-emerald-300" />}
+                  {(checkState === "taken" || checkState === "invalid") && <X className="h-4 w-4 text-red-300" />}
+                </div>
+              </div>
+              <p className="text-[12px] text-white/75 min-h-[18px]">
+                {checkState === "taken"
+                  ? "That username is taken. Try another."
+                  : checkState === "invalid"
+                    ? "3–20 letters, numbers or underscore."
+                    : checkState === "ok"
+                      ? "Looks good — that one's yours."
+                      : "3–20 letters, numbers or underscore."}
+              </p>
+              <Button
+                onClick={submitUsername}
+                disabled={savingUsername || checkState !== "ok"}
+                className="w-full h-12 rounded-xl font-semibold bg-white text-[#3A0CA3] hover:bg-white/90 disabled:opacity-50"
+              >
+                {savingUsername ? (
+                  <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> Saving</>
+                ) : (
+                  <>Continue<ArrowRight className="ml-1.5 h-4 w-4" /></>
+                )}
+              </Button>
+              <button
+                type="button"
+                onClick={() => setStep(0)}
+                className="w-full text-center text-xs text-white/70 hover:text-white py-1"
+              >
+                Skip for now
+              </button>
+            </div>
+          </div>
+        ) : step === "role" ? (
           <div className="bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] p-7 text-white">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold tracking-tight">First — who are you?</h2>

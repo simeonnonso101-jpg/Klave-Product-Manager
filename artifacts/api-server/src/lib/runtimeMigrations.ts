@@ -37,6 +37,19 @@ export async function runRuntimeMigrations(): Promise<void> {
       ?? (healedMembers as any).rows?.length
       ?? 0;
 
+    // 1b) Ensure the username column + case-insensitive unique index exist.
+    // Usernames are optional (nullable) so the legacy users created before this
+    // feature can still log in; they pick one in onboarding or profile edit.
+    // Uniqueness is enforced on LOWER(username) so "Ada" and "ada" can't both
+    // exist. The partial WHERE clause skips NULLs (multiple users may have no
+    // username yet without colliding).
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS username TEXT`);
+    await db.execute(sql`
+      CREATE UNIQUE INDEX IF NOT EXISTS users_username_lower_unique_idx
+      ON users (LOWER(username))
+      WHERE username IS NOT NULL
+    `);
+
     // 2) Ensure the partial unique index exists. The DM find-or-create handler
     // relies on this for its ON CONFLICT clause; without it, every DM creation
     // returns 500. CREATE INDEX IF NOT EXISTS makes this safe to re-run.
