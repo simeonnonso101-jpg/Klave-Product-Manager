@@ -126,6 +126,8 @@ export default function ChatsPage() {
                       <Link
                         key={group.id}
                         href={`/chat/${group.id}`}
+                        onMouseEnter={() => { import("@/pages/chat-view"); }}
+                        onTouchStart={() => { import("@/pages/chat-view"); }}
                         className="group relative flex items-center gap-3.5 px-4 py-3.5 border-b border-border/40 hover:bg-muted/40 transition-all cursor-pointer active:bg-muted"
                       >
                         {hasUnread && (

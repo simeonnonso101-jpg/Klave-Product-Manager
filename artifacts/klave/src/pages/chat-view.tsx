@@ -39,9 +39,16 @@ export default function ChatViewPage() {
   
   const { data: stats } = useGetGroupStats(groupId, { query: { enabled: !!groupId } as any });
   
+  // Poll messages while the tab is visible. Pauses when the browser tab is hidden
+  // to save the API and avoid spinner flicker. 8s feels live without hammering Render.
   const { data: messages, isLoading: isLoadingMessages } = useListMessages(
     { groupId, limit: 100 },
-    { query: { enabled: !!groupId, refetchInterval: 3000 } as any }
+    { query: {
+        enabled: !!groupId,
+        refetchInterval: 8000,
+        refetchIntervalInBackground: false,
+        staleTime: 0,
+    } as any }
   );
   
   const [, setLocation] = useLocation();
@@ -144,21 +151,35 @@ export default function ChatViewPage() {
 
   if (isLoadingGroup) {
     return (
-      <div className="flex flex-col h-[100dvh] bg-background">
-        <header className="h-16 border-b border-border/50 flex items-center px-4 gap-3 bg-card/90 backdrop-blur-md">
+      <div className="flex flex-col h-[100dvh] bg-[hsl(258,30%,97%)]">
+        <header className="h-[68px] flex items-center gap-2 px-2 bg-white/80 backdrop-blur-xl border-b border-white/40 shrink-0">
+          <Link href="/chats" className="p-2 rounded-full hover:bg-muted text-foreground transition-colors flex items-center shrink-0">
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
           <Skeleton className="h-10 w-10 rounded-full" />
-          <Skeleton className="h-6 w-32" />
+          <div className="flex flex-col gap-1.5 ml-1">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-20" />
+          </div>
         </header>
-        <div className="flex-1 p-4 space-y-4">
-          <Skeleton className="h-12 w-2/3 rounded-2xl rounded-tl-none" />
-          <Skeleton className="h-16 w-3/4 rounded-2xl rounded-tr-none self-end ml-auto" />
+        <div className="flex-1 p-4 space-y-3 overflow-hidden">
+          <Skeleton className="h-10 w-2/3 rounded-2xl rounded-tl-none" />
+          <Skeleton className="h-14 w-3/5 rounded-2xl rounded-tl-none" />
+          <Skeleton className="h-10 w-1/2 rounded-2xl rounded-tr-none ml-auto bg-[#5A1DE6]/15" />
+          <Skeleton className="h-12 w-3/5 rounded-2xl rounded-tr-none ml-auto bg-[#5A1DE6]/15" />
+          <Skeleton className="h-10 w-2/5 rounded-2xl rounded-tl-none" />
         </div>
       </div>
     );
   }
 
   if (!group) {
-    return <div className="p-8 text-center text-destructive">Class not found</div>;
+    return (
+      <div className="flex flex-col items-center justify-center h-[100dvh] p-8 text-center bg-background">
+        <p className="text-muted-foreground mb-4">This chat couldn't be loaded.</p>
+        <Link href="/chats" className="text-[#5A1DE6] font-semibold hover:underline">Back to chats</Link>
+      </div>
+    );
   }
 
   const isCreator = user?.id === group.creatorId;
