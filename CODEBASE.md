@@ -8,7 +8,7 @@ Klave is a chat-first platform for real estate course sellers — think "WhatsAp
 
 ## 1. The Stack
 
-| Layer | Tech |
+| Layer | Tech | 
 | --- | --- |
 | Monorepo | pnpm workspaces |
 | Frontend | React 18 + Vite + TypeScript |
