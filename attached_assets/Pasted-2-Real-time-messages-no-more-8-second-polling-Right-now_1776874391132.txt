@@ -1,0 +1,21 @@
+2. Real-time messages (no more 8-second polling)
+Right now everyone's app is hammering the API every 8 seconds, and messages still show up late. Adding a real-time channel (Pusher or Ably — same one we'd use for typing dots) makes the chat feel instant AND solves the typing-indicator follow-up at the same time. Two-for-one.
+
+3. Voice notes, images, and files in chat
+Coaches teach with their voice. Right now they can only send text. Adding voice notes alone would make Klave feel 5× more alive than Telegram for teaching. Images and PDF/video attachments come with the same upload pipeline.
+
+4. A real "Lessons" tab inside each group
+Today every course is just a scrolling chat. A second tab — pinned lessons, organized into modules, with video/PDF/audio — gives students a way to actually take the course instead of scrolling 6 months back. This is what separates Klave from "just another WhatsApp group."
+
+5. Reviews & ratings on courses
+Discover page shows courses but no social proof. Even simple 5-star + one-line reviews from enrolled students would massively increase signups. Easy build, huge conversion lift.
+
+6. Creator analytics dashboard
+Creators need to see: revenue this month, new students, engagement, top messages. Without this they fly blind and churn. Doesn't have to be fancy — even four big numbers + a line chart goes a long way.
+
+7. Native mobile app (Expo)
+You already have a mobile-first PWA, but a real app in the App Store / Play Store gives push notifications, home-screen presence, and credibility. The monorepo is already set up for an Expo artifact — would mostly reuse the API and a lot of the React code.
+
+If I had to pick just two to start with right now, I'd do #1 (real Stripe payments) and #2 (real-time messages + typing dots) in that order. Stripe unlocks the entire business model; real-time makes the product feel like the WhatsApp-killer the landing page promises.
+
+Which of these do you want to tackle first? I can scope the work and start building straight away.

@@ -41,7 +41,7 @@ export default function CreateGroupPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: user } = useGetCurrentUser();
+  const { data: user, isLoading: userLoading } = useGetCurrentUser();
   
   const createGroup = useCreateGroup();
   
@@ -73,13 +73,20 @@ export default function CreateGroupPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: "Still signing you in",
+        description: "Give it a second and try again.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     createGroup.mutate({
       data: {
-        name: formData.name,
+        name: formData.name.trim(),
         subject: formData.subject,
-        description: formData.description,
+        description: formData.description.trim() || undefined,
         price: isPaid && formData.price ? parseFloat(formData.price) : undefined,
         subscriptionModel: isPaid ? formData.subscriptionModel as any : undefined,
         type: "class",
@@ -92,8 +99,13 @@ export default function CreateGroupPage() {
         queryClient.invalidateQueries({ queryKey: getListGroupsQueryKey() });
         setLocation(`/groups/${newGroup.id}`);
       },
-      onError: () => {
-        toast({ title: "Failed to create group", variant: "destructive" });
+      onError: (err: unknown) => {
+        const message = err instanceof Error ? err.message : "Please try again in a moment.";
+        toast({
+          title: "Couldn't create the course",
+          description: message,
+          variant: "destructive",
+        });
       }
     });
   };
@@ -354,13 +366,13 @@ export default function CreateGroupPage() {
             )}
           </Card>
 
-          <Button 
-            type="submit" 
-            className="w-full h-14 text-[17px] font-bold shadow-lg shadow-primary/30 rounded-2xl" 
-            disabled={!formData.name || createGroup.isPending}
+          <Button
+            type="submit"
+            className="w-full h-14 text-[17px] font-bold shadow-lg shadow-primary/30 rounded-2xl"
+            disabled={!formData.name.trim() || createGroup.isPending || userLoading || !user}
           >
-            {createGroup.isPending && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-            Create Group
+            {(createGroup.isPending || userLoading) && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+            {createGroup.isPending ? "Creating…" : userLoading ? "Signing you in…" : "Create Group"}
           </Button>
         </form>
       </div>

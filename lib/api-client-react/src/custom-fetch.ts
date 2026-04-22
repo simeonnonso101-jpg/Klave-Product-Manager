@@ -350,17 +350,60 @@ export async function customFetch<T = unknown>(
   }
 
   // Attach bearer token when an auth getter is configured and no
-  // Authorization header has been explicitly provided.
+  // Authorization header has been explicitly provided. Bound the token
+  // fetch with a short timeout so a stuck Clerk session never freezes
+  // the entire request indefinitely.
   if (_authTokenGetter && !headers.has("authorization")) {
-    const token = await _authTokenGetter();
-    if (token) {
-      headers.set("authorization", `Bearer ${token}`);
+    try {
+      const tokenPromise = _authTokenGetter();
+      const token = await Promise.race<string | null>([
+        tokenPromise,
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000)),
+      ]);
+      if (token) {
+        headers.set("authorization", `Bearer ${token}`);
+      }
+    } catch {
+      // Swallow auth-getter failures; the request will still go out
+      // unauthenticated and the server will respond with 401 if needed.
     }
   }
 
   const requestInfo = { method, url: resolveUrl(input) };
 
-  const response = await fetch(input, { ...init, method, headers, credentials: init.credentials ?? "include" });
+  // Cap every request at 60s. This protects against silent network
+  // stalls and Render free-tier cold starts that would otherwise leave
+  // the UI spinning forever with no error to surface.
+  const externalSignal = (init as RequestInit).signal as AbortSignal | undefined;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 60_000);
+  const onExternalAbort = () => controller.abort();
+  if (externalSignal) {
+    if (externalSignal.aborted) controller.abort();
+    else externalSignal.addEventListener("abort", onExternalAbort, { once: true });
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(input, {
+      ...init,
+      method,
+      headers,
+      credentials: init.credentials ?? "include",
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (controller.signal.aborted && (!externalSignal || !externalSignal.aborted)) {
+      throw new Error(
+        `Request timed out after 60s: ${requestInfo.method} ${requestInfo.url}. ` +
+          `The server may be waking up — please try again.`,
+      );
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+    if (externalSignal) externalSignal.removeEventListener("abort", onExternalAbort);
+  }
 
   if (!response.ok) {
     const errorData = await parseErrorBody(response, method);
