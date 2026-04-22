@@ -1,6 +1,6 @@
 import { useGetGroup, useGetGroupStats, useListMessages, useSendMessage, useDeleteMessage, useReplicateLecture, useListGroups, useGetCurrentUser, getListMessagesQueryKey, getListReplicationJobsQueryKey } from "@workspace/api-client-react";
 import { useParams, Link, useLocation } from "wouter";
-import { ArrowLeft, Send, Sparkles, Image as ImageIcon, Trash2, Copy, Loader2, Smile, Mic, Plus, Camera, ChevronDown } from "lucide-react";
+import { ArrowLeft, Send, Sparkles, Image as ImageIcon, Trash2, Copy, Loader2, Smile, Mic, Plus, Camera, ChevronDown, CheckCheck, Check } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -186,11 +186,14 @@ export default function ChatViewPage() {
   const otherGroups = groups?.filter(g => g.id !== groupId) || [];
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[hsl(258,30%,97%)] relative overflow-hidden">
-      {/* Subtle purple-dot background pattern */}
-      <div className="absolute inset-0 opacity-50 pointer-events-none" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%235A1DE6\" fill-opacity=\"0.06\"%3E%3Ccircle cx=\"30\" cy=\"30\" r=\"2\"/%3E%3Ccircle cx=\"5\" cy=\"5\" r=\"1\"/%3E%3Ccircle cx=\"55\" cy=\"55\" r=\"1\"/%3E%3Ccircle cx=\"15\" cy=\"45\" r=\"1\"/%3E%3Ccircle cx=\"45\" cy=\"15\" r=\"1\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')" }}></div>
+    <div className="flex flex-col h-[100dvh] bg-[hsl(258,30%,97%)] dark:bg-[hsl(258,18%,7%)] relative overflow-hidden">
+      {/* Subtle purple-dot background pattern (light) */}
+      <div className="absolute inset-0 opacity-50 pointer-events-none dark:hidden" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%235A1DE6\" fill-opacity=\"0.06\"%3E%3Ccircle cx=\"30\" cy=\"30\" r=\"2\"/%3E%3Ccircle cx=\"5\" cy=\"5\" r=\"1\"/%3E%3Ccircle cx=\"55\" cy=\"55\" r=\"1\"/%3E%3Ccircle cx=\"15\" cy=\"45\" r=\"1\"/%3E%3Ccircle cx=\"45\" cy=\"15\" r=\"1\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')" }}></div>
+      {/* Dark-mode background: soft purple radial wash + faint dot pattern */}
+      <div className="absolute inset-0 hidden dark:block pointer-events-none" style={{ background: "radial-gradient(circle at 20% 0%, rgba(90, 29, 230, 0.18) 0%, transparent 45%), radial-gradient(circle at 90% 100%, rgba(58, 12, 163, 0.22) 0%, transparent 50%)" }} />
+      <div className="absolute inset-0 hidden dark:block opacity-40 pointer-events-none" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.04\"%3E%3Ccircle cx=\"30\" cy=\"30\" r=\"2\"/%3E%3Ccircle cx=\"5\" cy=\"5\" r=\"1\"/%3E%3Ccircle cx=\"55\" cy=\"55\" r=\"1\"/%3E%3Ccircle cx=\"15\" cy=\"45\" r=\"1\"/%3E%3Ccircle cx=\"45\" cy=\"15\" r=\"1\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')" }} />
 
-      <header className="h-[68px] flex items-center justify-between px-2 bg-white/80 backdrop-blur-xl border-b border-white/40 shadow-sm z-20 shrink-0">
+      <header className="h-[68px] flex items-center justify-between px-2 bg-white/80 dark:bg-[hsl(258,18%,10%)]/85 backdrop-blur-xl border-b border-white/40 dark:border-white/10 shadow-sm z-20 shrink-0">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <Link href="/chats" className="p-2 rounded-full hover:bg-muted text-foreground transition-colors flex items-center shrink-0">
             <ArrowLeft className="h-5 w-5" />
@@ -201,7 +204,7 @@ export default function ChatViewPage() {
                 <AvatarImage src={group.coverImageUrl || undefined} />
                 <AvatarFallback className="bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] text-white font-bold">{group.name.charAt(0)}</AvatarFallback>
               </Avatar>
-              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white" />
+              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white dark:border-[hsl(258,18%,10%)]" />
             </div>
             <div className="flex flex-col min-w-0">
               <h2 className="text-base font-semibold leading-tight truncate">{group.name}</h2>
@@ -301,7 +304,7 @@ export default function ChatViewPage() {
                       className={`px-3.5 py-2 text-[15px] shadow-sm relative ${
                         isMe
                           ? "bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] text-white shadow-[#5A1DE6]/20"
-                          : "bg-white dark:bg-card text-foreground"
+                          : "bg-white dark:bg-[hsl(258,14%,14%)] text-foreground border border-transparent dark:border-white/5"
                       } ${
                         showTail && isMe ? "rounded-l-2xl rounded-tr-2xl rounded-br-sm" :
                         showTail && !isMe ? "rounded-r-2xl rounded-tl-2xl rounded-bl-sm" : "rounded-2xl"
@@ -310,16 +313,14 @@ export default function ChatViewPage() {
                         wordBreak: 'break-word'
                       }}
                     >
-                      <span className="leading-relaxed">{msg.content}</span>
+                      <span className="leading-relaxed whitespace-pre-wrap">{msg.content}</span>
 
                       <div className="flex justify-end items-center gap-1 mt-1 -mb-0.5 min-w-[50px]">
-                        <span className={`text-[10px] inline-block text-right w-full ${isMe ? "text-white/70" : "text-black/40 dark:text-white/40"}`}>
+                        <span className={`text-[10px] inline-block text-right ${isMe ? "text-white/75" : "text-black/45 dark:text-white/45"}`}>
                           {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                         {isMe && (
-                          <svg viewBox="0 0 16 11" width="16" height="11" className="text-white/90 shrink-0">
-                            <path fill="currentColor" d="M11.83 1.01L10.37.03a.58.58 0 0 0-.82.16L5.43 6.6 3.12 3.84a.58.58 0 0 0-.82-.07l-1.35 1.1a.58.58 0 0 0-.08.82l3.41 4.1a.58.58 0 0 0 .85.05l7-9.01a.58.58 0 0 0-.16-.83zM15.42 1.01l-1.46-.98a.58.58 0 0 0-.82.16l-3.32 4.27 1.34 1.13 3.42-4.4a.58.58 0 0 0-.16-.83l-.01.01zM7.22 10.3l-1.34-1.13-1.63 2.1a.58.58 0 0 0 .85.05l2.27-2.73-.01.01z"></path>
-                          </svg>
+                          <CheckCheck className="h-3.5 w-3.5 text-white/95 shrink-0" strokeWidth={2.5} />
                         )}
                       </div>
                     </div>

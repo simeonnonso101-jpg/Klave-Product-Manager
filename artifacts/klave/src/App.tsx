@@ -20,6 +20,7 @@ const GrowPage = lazy(() => import("@/pages/grow"));
 const CreateGroupPage = lazy(() => import("@/pages/create-group"));
 const GroupDetailPage = lazy(() => import("@/pages/group-detail"));
 const ProfilePage = lazy(() => import("@/pages/profile"));
+const ProfileEditPage = lazy(() => import("@/pages/profile-edit"));
 
 function PageSkeleton() {
   return (
@@ -231,6 +232,7 @@ function ClerkProviderWithRoutes() {
               <Route path="/wallet" component={() => <Protected><WalletPage /></Protected>} />
               <Route path="/grow" component={() => <Protected><GrowPage /></Protected>} />
               <Route path="/profile" component={() => <Protected><ProfilePage /></Protected>} />
+              <Route path="/profile/edit" component={() => <Protected><ProfileEditPage /></Protected>} />
               <Route component={NotFound} />
             </Switch>
           </Suspense>

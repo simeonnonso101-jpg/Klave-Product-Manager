@@ -46,7 +46,7 @@ router.get("/users/me", async (req, res): Promise<void> => {
         clerkUserId,
         name,
         email,
-        role: "creator",
+        role: "student",
         avatarUrl: clerkUser.imageUrl ?? null,
       }).returning();
     }
