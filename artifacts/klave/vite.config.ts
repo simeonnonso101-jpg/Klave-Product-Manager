@@ -44,6 +44,26 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    target: "es2020",
+    cssCodeSplit: true,
+    sourcemap: false,
+    chunkSizeWarningLimit: 800,
+    rollupOptions: {
+      output: {
+        // Split heavy vendor libs into their own chunks so the initial bundle is small
+        // and the browser can cache them across deploys.
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          if (id.includes("recharts") || id.includes("d3-")) return "vendor-charts";
+          if (id.includes("@clerk")) return "vendor-clerk";
+          if (id.includes("@radix-ui")) return "vendor-radix";
+          if (id.includes("@tanstack")) return "vendor-query";
+          if (id.includes("lucide-react")) return "vendor-icons";
+          if (id.includes("react-dom") || id.includes("scheduler")) return "vendor-react-dom";
+          if (id.includes("react") && !id.includes("react-")) return "vendor-react";
+        },
+      },
+    },
   },
   server: {
     port,

@@ -1,20 +1,32 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, lazy, Suspense } from "react";
 import { ClerkProvider, SignIn, SignUp, Show, useClerk } from "@clerk/react";
 import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
-import NotFound from "@/pages/not-found";
+
+// Landing is the first thing signed-out users see — keep eager so it paints instantly.
 import LandingPage from "@/pages/landing";
-import ChatsPage from "@/pages/chats";
-import ChatViewPage from "@/pages/chat-view";
-import GroupsPage from "@/pages/groups";
-import WalletPage from "@/pages/wallet";
-import GrowPage from "@/pages/grow";
-import CreateGroupPage from "@/pages/create-group";
-import GroupDetailPage from "@/pages/group-detail";
-import ProfilePage from "@/pages/profile";
+
+// Every other route is code-split: it ships only when the user navigates there.
+const NotFound = lazy(() => import("@/pages/not-found"));
+const ChatsPage = lazy(() => import("@/pages/chats"));
+const ChatViewPage = lazy(() => import("@/pages/chat-view"));
+const GroupsPage = lazy(() => import("@/pages/groups"));
+const WalletPage = lazy(() => import("@/pages/wallet"));
+const GrowPage = lazy(() => import("@/pages/grow"));
+const CreateGroupPage = lazy(() => import("@/pages/create-group"));
+const GroupDetailPage = lazy(() => import("@/pages/group-detail"));
+const ProfilePage = lazy(() => import("@/pages/profile"));
+
+function PageSkeleton() {
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="h-10 w-10 rounded-full border-2 border-[#5A1DE6]/20 border-t-[#5A1DE6] animate-spin" />
+    </div>
+  );
+}
 
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
@@ -30,7 +42,20 @@ function stripBase(path: string): string {
     : path;
 }
 
-const queryClient = new QueryClient();
+// Defaults tuned for snappier UX:
+// - staleTime keeps data fresh for 30s without refetching on every mount/focus
+// - gcTime keeps unmounted query data in memory for 5 min so back-nav is instant
+// - disable refetchOnWindowFocus globally; opt back in per-query if needed
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      gcTime: 5 * 60_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const clerkAppearance = {
   options: {
@@ -175,20 +200,22 @@ function ClerkProviderWithRoutes() {
       <QueryClientProvider client={queryClient}>
         <ClerkQueryClientCacheInvalidator />
         <TooltipProvider>
-          <Switch>
-            <Route path="/" component={HomeRedirect} />
-            <Route path="/sign-in/*?" component={SignInPage} />
-            <Route path="/sign-up/*?" component={SignUpPage} />
-            <Route path="/chats" component={() => <Protected><ChatsPage /></Protected>} />
-            <Route path="/chat/:id" component={() => <Protected><ChatViewPage /></Protected>} />
-            <Route path="/groups" component={() => <Protected><GroupsPage /></Protected>} />
-            <Route path="/groups/new" component={() => <Protected><CreateGroupPage /></Protected>} />
-            <Route path="/groups/:id" component={() => <Protected><GroupDetailPage /></Protected>} />
-            <Route path="/wallet" component={() => <Protected><WalletPage /></Protected>} />
-            <Route path="/grow" component={() => <Protected><GrowPage /></Protected>} />
-            <Route path="/profile" component={() => <Protected><ProfilePage /></Protected>} />
-            <Route component={NotFound} />
-          </Switch>
+          <Suspense fallback={<PageSkeleton />}>
+            <Switch>
+              <Route path="/" component={HomeRedirect} />
+              <Route path="/sign-in/*?" component={SignInPage} />
+              <Route path="/sign-up/*?" component={SignUpPage} />
+              <Route path="/chats" component={() => <Protected><ChatsPage /></Protected>} />
+              <Route path="/chat/:id" component={() => <Protected><ChatViewPage /></Protected>} />
+              <Route path="/groups" component={() => <Protected><GroupsPage /></Protected>} />
+              <Route path="/groups/new" component={() => <Protected><CreateGroupPage /></Protected>} />
+              <Route path="/groups/:id" component={() => <Protected><GroupDetailPage /></Protected>} />
+              <Route path="/wallet" component={() => <Protected><WalletPage /></Protected>} />
+              <Route path="/grow" component={() => <Protected><GrowPage /></Protected>} />
+              <Route path="/profile" component={() => <Protected><ProfilePage /></Protected>} />
+              <Route component={NotFound} />
+            </Switch>
+          </Suspense>
           <Toaster />
         </TooltipProvider>
       </QueryClientProvider>
