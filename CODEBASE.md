@@ -4,7 +4,7 @@ A quick orientation for a new developer joining the project.
  
 Klave is a chat-first platform for real estate course sellers — think "WhatsApp meets Udemy." Creators sell access to chat-based courses; students join groups and consume lessons through messages.
 
---- 
+---  
 
 ## 1. The Stack
 
