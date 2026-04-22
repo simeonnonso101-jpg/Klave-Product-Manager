@@ -2,6 +2,8 @@ import { useGetGroup, useGetGroupStats, useListMessages, useSendMessage, useDele
 import { useParams, Link, useLocation } from "wouter";
 import { ArrowLeft, Send, Sparkles, Image as ImageIcon, Trash2, Copy, Loader2, Smile, Mic, Plus, Camera, ChevronDown, CheckCheck, Check } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { getPusher, groupChannelName } from "@/lib/pusher";
+import type { Channel } from "pusher-js";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,13 +41,14 @@ export default function ChatViewPage() {
   
   const { data: stats } = useGetGroupStats(groupId, { query: { enabled: !!groupId } as any });
   
-  // Poll messages while the tab is visible. Pauses when the browser tab is hidden
-  // to save the API and avoid spinner flicker. 8s feels live without hammering Render.
+  // Realtime first: Pusher pushes new messages via the subscription below.
+  // Polling stays at 30s as a quiet safety net in case the websocket drops or
+  // Pusher auth fails (e.g. cold start on Render).
   const { data: messages, isLoading: isLoadingMessages } = useListMessages(
     { groupId, limit: 100 },
     { query: {
         enabled: !!groupId,
-        refetchInterval: 8000,
+        refetchInterval: 30000,
         refetchIntervalInBackground: false,
         staleTime: 0,
     } as any }
@@ -67,6 +70,76 @@ export default function ChatViewPage() {
   const [targetGroupIds, setTargetGroupIds] = useState<number[]>([]);
   const [reactions, setReactions] = useState<Record<number, string[]>>({});
   const [showScrollDown, setShowScrollDown] = useState(false);
+
+  // userId -> name. Cleared automatically after each user goes idle for 3s.
+  const [typingUsers, setTypingUsers] = useState<Record<number, string>>({});
+  const typingTimeoutsRef = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
+  const channelRef = useRef<Channel | null>(null);
+  const lastTypingSentAtRef = useRef<number>(0);
+
+  // Realtime subscription. Re-runs when the group or the current user changes.
+  useEffect(() => {
+    if (!groupId || !user?.id) return;
+    const pusher = getPusher();
+    if (!pusher) return;
+
+    const channelName = groupChannelName(groupId);
+    const channel = pusher.subscribe(channelName);
+    channelRef.current = channel;
+
+    const onNewMessage = () => {
+      queryClient.invalidateQueries({ queryKey: getListMessagesQueryKey({ groupId }) });
+    };
+    const onDeletedMessage = () => {
+      queryClient.invalidateQueries({ queryKey: getListMessagesQueryKey({ groupId }) });
+    };
+    const onTyping = (data: { userId: number; name: string }) => {
+      if (!data || data.userId === user.id) return;
+      setTypingUsers((prev) => ({ ...prev, [data.userId]: data.name }));
+      const existing = typingTimeoutsRef.current[data.userId];
+      if (existing) clearTimeout(existing);
+      typingTimeoutsRef.current[data.userId] = setTimeout(() => {
+        setTypingUsers((prev) => {
+          const next = { ...prev };
+          delete next[data.userId];
+          return next;
+        });
+        delete typingTimeoutsRef.current[data.userId];
+      }, 3000);
+    };
+
+    channel.bind("message:new", onNewMessage);
+    channel.bind("message:deleted", onDeletedMessage);
+    channel.bind("client-typing", onTyping);
+
+    return () => {
+      channel.unbind("message:new", onNewMessage);
+      channel.unbind("message:deleted", onDeletedMessage);
+      channel.unbind("client-typing", onTyping);
+      pusher.unsubscribe(channelName);
+      channelRef.current = null;
+      Object.values(typingTimeoutsRef.current).forEach(clearTimeout);
+      typingTimeoutsRef.current = {};
+      setTypingUsers({});
+    };
+  }, [groupId, user?.id, queryClient]);
+
+  // Throttled typing broadcast — at most one event per second.
+  const broadcastTyping = () => {
+    const channel = channelRef.current;
+    if (!channel || !user) return;
+    const now = Date.now();
+    if (now - lastTypingSentAtRef.current < 1000) return;
+    lastTypingSentAtRef.current = now;
+    try {
+      channel.trigger("client-typing", { userId: user.id, name: user.name });
+    } catch {
+      // Channel not yet subscribed or client-events disabled in Pusher dashboard.
+      // Silent fail — typing dots are non-critical.
+    }
+  };
+
+  const typingNames = Object.values(typingUsers);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -208,9 +281,24 @@ export default function ChatViewPage() {
             </div>
             <div className="flex flex-col min-w-0">
               <h2 className="text-base font-semibold leading-tight truncate">{group.name}</h2>
-              <span className="text-xs text-muted-foreground mt-0.5 truncate">
-                <span className="text-emerald-600 font-medium">● Active</span> • {stats?.memberCount || group.memberCount || 1} members
-              </span>
+              {typingNames.length > 0 ? (
+                <span className="text-xs text-[#5A1DE6] dark:text-[#9B7BFF] mt-0.5 truncate font-medium flex items-center gap-1.5">
+                  {typingNames.length === 1
+                    ? `${typingNames[0]} is typing`
+                    : typingNames.length === 2
+                    ? `${typingNames[0]} and ${typingNames[1]} are typing`
+                    : `${typingNames[0]} and ${typingNames.length - 1} others are typing`}
+                  <span className="inline-flex items-center gap-0.5">
+                    <span className="h-1 w-1 rounded-full bg-current animate-pulse" style={{ animationDelay: "0ms" }} />
+                    <span className="h-1 w-1 rounded-full bg-current animate-pulse" style={{ animationDelay: "150ms" }} />
+                    <span className="h-1 w-1 rounded-full bg-current animate-pulse" style={{ animationDelay: "300ms" }} />
+                  </span>
+                </span>
+              ) : (
+                <span className="text-xs text-muted-foreground mt-0.5 truncate">
+                  <span className="text-emerald-600 font-medium">● Active</span> • {stats?.memberCount || group.memberCount || 1} members
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -380,6 +468,7 @@ export default function ChatViewPage() {
                 setContent(e.target.value);
                 e.currentTarget.style.height = 'auto';
                 e.currentTarget.style.height = Math.min(e.currentTarget.scrollHeight, 120) + 'px';
+                if (e.target.value.length > 0) broadcastTyping();
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {

@@ -19,7 +19,8 @@
     "express": "^5",
     "http-proxy-middleware": "^3.0.5",
     "pino": "^9",
-    "pino-http": "^10"
+    "pino-http": "^10",
+    "pusher": "^5.3.3"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",

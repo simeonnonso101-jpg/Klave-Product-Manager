@@ -3,6 +3,7 @@ import { ClerkProvider, SignIn, SignUp, Show, useClerk, useAuth } from "@clerk/r
 import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
+import { setPusherTokenGetter } from "@/lib/pusher";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -167,14 +168,19 @@ function ApiAuthBridge() {
   const { getToken, isLoaded } = useAuth();
   useEffect(() => {
     if (!isLoaded) return;
-    setAuthTokenGetter(async () => {
+    const tokenGetter = async () => {
       try {
         return await getToken();
       } catch {
         return null;
       }
-    });
-    return () => setAuthTokenGetter(null);
+    };
+    setAuthTokenGetter(tokenGetter);
+    setPusherTokenGetter(tokenGetter);
+    return () => {
+      setAuthTokenGetter(null);
+      setPusherTokenGetter(null);
+    };
   }, [getToken, isLoaded]);
   return null;
 }

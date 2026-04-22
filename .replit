@@ -1,2 +1,23 @@
+modules = ["nodejs-20"]
 [agent]
 expertMode = true
+
+[userenv]
+
+[userenv.shared]
+PUSHER_APP_ID = "2145172"
+PUSHER_KEY = "8768b99bf06cb956234a"
+PUSHER_CLUSTER = "eu"
+VITE_PUSHER_KEY = "8768b99bf06cb956234a"
+VITE_PUSHER_CLUSTER = "eu"
+
+[nix]
+channel = "stable-25_05"
+
+[[ports]]
+localPort = 8080
+externalPort = 80
+
+[[ports]]
+localPort = 25728
+externalPort = 3000
