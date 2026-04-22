@@ -10,6 +10,7 @@ import dashboardRouter from "./dashboard";
 import realtimeRouter from "./realtime";
 import directChatsRouter from "./directChats";
 import discoverRouter from "./discover";
+import storageRouter from "./storage";
 
 const router: IRouter = Router();
 
@@ -27,5 +28,6 @@ router.use(aiRouter);
 router.use(dashboardRouter);
 router.use(realtimeRouter);
 router.use(directChatsRouter);
+router.use(storageRouter);
 
 export default router;

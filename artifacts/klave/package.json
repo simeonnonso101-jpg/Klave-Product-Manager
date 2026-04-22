@@ -76,6 +76,7 @@
   },
   "dependencies": {
     "@clerk/react": "^6.4.2",
-    "pusher-js": "^8.5.0"
+    "pusher-js": "^8.5.0",
+    "react-easy-crop": "^5.5.7"
   }
 }

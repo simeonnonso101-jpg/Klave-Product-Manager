@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation, Link } from "wouter";
 import { useGetCurrentUser, useUpdateCurrentUser, customFetch } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useClerk, useUser } from "@clerk/react";
+import { useUser } from "@clerk/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Check, Loader2, GraduationCap, Users, Camera, AtSign, X } from "lucide-react";
+import { AvatarCropUploader, useAvatarFilePicker } from "@/components/avatar-uploader";
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
 
@@ -17,12 +18,21 @@ type CheckResp = { available: boolean; reason: "ok" | "self" | "taken" | "invali
 
 export default function ProfileEditPage() {
   const [, setLocation] = useLocation();
-  const { data: user, isLoading, refetch } = useGetCurrentUser();
+  const { data: user, isLoading } = useGetCurrentUser();
   const updateProfile = useUpdateCurrentUser();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { openUserProfile } = useClerk();
   const { user: clerkUser } = useUser();
+
+  // Avatar upload state. We hold the picked file separately from the dialog
+  // open flag so the dialog mounts cleanly each time and revokes its blob URL.
+  const [pickedFile, setPickedFile] = useState<File | null>(null);
+  const [cropOpen, setCropOpen] = useState(false);
+  const [localAvatarOverride, setLocalAvatarOverride] = useState<string | null>(null);
+  const { open: openFilePicker, input: fileInput } = useAvatarFilePicker((f) => {
+    setPickedFile(f);
+    setCropOpen(true);
+  });
 
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
@@ -118,19 +128,36 @@ export default function ProfileEditPage() {
     });
   };
 
-  const handleChangePicture = () => {
-    try {
-      openUserProfile();
-      // When the Clerk modal closes the user may have changed their avatar.
-      // We pull /users/me again on focus; the GET handler syncs from Clerk.
-      const onFocus = () => { refetch(); window.removeEventListener("focus", onFocus); };
-      window.addEventListener("focus", onFocus);
-    } catch {
-      toast({ title: "Couldn't open picture editor", variant: "destructive" });
-    }
+  const handleChangePicture = () => openFilePicker();
+
+  // After upload: optimistically show the new image, then PATCH the URL onto
+  // the user record. We store an ABSOLUTE URL in the DB (prefixed with the
+  // API origin) because the frontend is hosted on Vercel while the API lives
+  // on Render — relative `/api/...` paths would 404 in production.
+  const handleAvatarUploaded = (_objectPath: string, servingUrl: string) => {
+    const apiBase = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/+$/, "") ?? "";
+    const absoluteUrl = apiBase ? `${apiBase}${servingUrl}` : servingUrl;
+    setLocalAvatarOverride(absoluteUrl);
+    updateProfile.mutate(
+      { data: { avatarUrl: absoluteUrl } as any },
+      {
+        onSuccess: (updated) => {
+          queryClient.setQueryData(['/api/users/me'], updated);
+          toast({ title: "Photo updated" });
+        },
+        onError: () => {
+          setLocalAvatarOverride(null);
+          toast({
+            title: "Couldn't save photo",
+            description: "The image uploaded but we couldn't save it to your profile. Try again.",
+            variant: "destructive",
+          });
+        },
+      },
+    );
   };
 
-  const avatarSrc = clerkUser?.imageUrl || user?.avatarUrl || undefined;
+  const avatarSrc = localAvatarOverride || user?.avatarUrl || clerkUser?.imageUrl || undefined;
   const initial = (name?.[0] || user?.name?.[0] || "K").toUpperCase();
 
   return (
@@ -284,6 +311,15 @@ export default function ProfileEditPage() {
           Tap <span className="font-semibold text-foreground">Save</span> at the top when you're done.
         </p>
       </form>
+
+      {fileInput}
+      <AvatarCropUploader
+        open={cropOpen}
+        file={pickedFile}
+        onClose={() => { setCropOpen(false); setPickedFile(null); }}
+        onUploaded={handleAvatarUploaded}
+        onError={(msg) => toast({ title: "Upload failed", description: msg, variant: "destructive" })}
+      />
     </div>
   );
 }
