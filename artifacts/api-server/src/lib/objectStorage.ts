@@ -7,6 +7,12 @@ export class ObjectNotFoundError extends Error {
   }
 }
 
+type StorageResponse = {
+  status: number;
+  headers: Map<string, string>;
+  body: Buffer;
+};
+
 type StorageItem = {
   key: string;
   value: string;
@@ -15,48 +21,48 @@ type StorageItem = {
 export class ObjectStorageService {
   private storage = new Map<string, string>();
 
-  // Normalize path
   normalizeObjectEntityPath(path: string): string {
     return path.replace(/\/+/g, "/").trim();
   }
 
-  // Fake upload URL (since no real cloud storage yet)
   async getObjectEntityUploadURL(key: string): Promise<string> {
-    const normalizedKey = this.normalizeObjectEntityPath(key);
-    return `https://fake-upload-url.local/upload/${encodeURIComponent(normalizedKey)}`;
+    const normalized = this.normalizeObjectEntityPath(key);
+    return `https://fake-upload-url.local/${encodeURIComponent(normalized)}`;
   }
 
-  // Save object
   async putObject(key: string, value: string): Promise<void> {
     this.storage.set(key, value);
   }
 
-  // Get raw object
   async getObject(key: string): Promise<string> {
     const value = this.storage.get(key);
     if (!value) throw new ObjectNotFoundError(key);
     return value;
   }
 
-  // Download object (alias of getObject)
-  async downloadObject(key: string): Promise<string> {
-    return this.getObject(key);
-  }
-
-  // Get object file (simulate file response)
-  async getObjectEntityFile(key: string): Promise<{ data: string }> {
+  // ✅ THIS is what your routes expect
+  async downloadObject(key: string): Promise<StorageResponse> {
     const value = await this.getObject(key);
-    return { data: value };
+
+    return {
+      status: 200,
+      headers: new Map([
+        ["content-type", "text/plain"],
+      ]),
+      body: Buffer.from(value),
+    };
   }
 
-  // Search (simple filter)
+  async getObjectEntityFile(key: string): Promise<StorageResponse> {
+    return this.downloadObject(key);
+  }
+
   async searchPublicObject(query: string): Promise<StorageItem[]> {
     return Array.from(this.storage.entries())
       .filter(([key]) => key.includes(query))
       .map(([key, value]) => ({ key, value }));
   }
 
-  // Delete
   async deleteObject(key: string): Promise<void> {
     if (!this.storage.has(key)) {
       throw new ObjectNotFoundError(key);
@@ -64,7 +70,6 @@ export class ObjectStorageService {
     this.storage.delete(key);
   }
 
-  // List all
   async listObjects(): Promise<StorageItem[]> {
     return Array.from(this.storage.entries()).map(([key, value]) => ({
       key,
