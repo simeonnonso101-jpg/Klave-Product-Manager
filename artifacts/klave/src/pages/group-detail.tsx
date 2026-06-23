@@ -1,6 +1,7 @@
-import { useGetGroup, useGetGroupStats, useListGroupMembers, useGetCurrentUser, useCreatePayment, useAddGroupMember, useUpdateGroup, useListUsers, getGetGroupQueryKey, getListGroupMembersQueryKey, getListGroupsQueryKey } from "@workspace/api-client-react";
+import { useGetGroup, useGetGroupStats, useListGroupMembers, useGetCurrentUser, useCreatePayment, useAddGroupMember, useUpdateGroup, useListUsers, getGetGroupQueryKey, getListGroupMembersQueryKey, getListGroupsQueryKey, customFetch } from "@workspace/api-client-react";
 import { useParams, Link, useLocation } from "wouter";
-import { ArrowLeft, Users, ShieldCheck, CreditCard, Settings, Loader2, UserPlus, MessageCircle, BookOpen } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, Users, ShieldCheck, CreditCard, Settings, Loader2, UserPlus, MessageCircle, BookOpen, Plus, PlayCircle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +45,16 @@ export default function GroupDetailPage() {
     subject: "",
     description: "",
     price: "",
+  });
+
+  type Lesson = { id: number; title: string; position: number; isPublished: boolean; videoUrl: string | null };
+  type LessonsResp = { lessons: Lesson[]; isPreview: boolean; total: number };
+
+  const { data: lessonsData } = useQuery<LessonsResp>({
+    queryKey: ["lessons", groupId],
+    queryFn: () => customFetch<LessonsResp>(`/api/groups/${groupId}/lessons`, { method: "GET" }),
+    enabled: !!groupId,
+    retry: false,
   });
 
   const isMember = members?.some(m => m.userId === user?.id);
@@ -230,6 +241,81 @@ export default function GroupDetailPage() {
           <p className="text-muted-foreground leading-relaxed text-[15px]">
             {group.description || "Learn from this creator and connect with a community of students."}
           </p>
+        </section>
+
+        {/* Lessons section */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="font-semibold text-lg flex items-center gap-2 text-foreground">
+              <BookOpen className="h-5 w-5 text-muted-foreground" />
+              Lessons
+              {lessonsData && (
+                <span className="text-sm font-normal text-muted-foreground">
+                  ({lessonsData.total})
+                </span>
+              )}
+            </h3>
+            {isCreator && (
+              <Link href={`/groups/${groupId}/lessons/new`}>
+                <Button variant="ghost" size="sm" className="text-sm text-[#5A1DE6] dark:text-[#9F75FF] font-semibold h-8 px-2 gap-1 hover:bg-[#5A1DE6]/10">
+                  <Plus className="h-4 w-4" /> Add
+                </Button>
+              </Link>
+            )}
+          </div>
+
+          {!lessonsData ? null : lessonsData.lessons.length === 0 ? (
+            <div className="bg-card border border-border rounded-2xl p-6 text-center">
+              <BookOpen className="h-8 w-8 mx-auto mb-2 text-muted-foreground opacity-50" />
+              <p className="text-sm font-semibold text-foreground">No lessons yet</p>
+              {isCreator && (
+                <Link href={`/groups/${groupId}/lessons/new`}>
+                  <Button size="sm" className="mt-3 rounded-full bg-gradient-to-r from-[#5A1DE6] to-[#3A0CA3] text-white border-0 hover:opacity-90">
+                    <Plus className="h-4 w-4 mr-1" /> Add first lesson
+                  </Button>
+                </Link>
+              )}
+            </div>
+          ) : (
+            <div className="bg-card border border-border rounded-2xl shadow-sm divide-y divide-border overflow-hidden">
+              {lessonsData.lessons.map((lesson, idx) => (
+                isMember || isCreator ? (
+                  <Link key={lesson.id} href={`/groups/${groupId}/lessons/${lesson.id}`} className="block">
+                    <div className="flex items-center gap-3 p-4 hover:bg-muted/40 transition-colors">
+                      <div className="h-9 w-9 rounded-xl bg-[#5A1DE6]/10 text-[#5A1DE6] flex items-center justify-center shrink-0 text-sm font-bold">
+                        {lesson.videoUrl
+                          ? <PlayCircle className="h-4 w-4" />
+                          : <span>{idx + 1}</span>}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[15px] font-semibold text-foreground truncate leading-tight">{lesson.title}</p>
+                        {!lesson.isPublished && (
+                          <p className="text-[11px] text-amber-600 font-medium">Hidden</p>
+                        )}
+                      </div>
+                      {lesson.videoUrl && (
+                        <Badge variant="outline" className="text-[10px] shrink-0 border-[#5A1DE6]/30 text-[#5A1DE6]">Video</Badge>
+                      )}
+                    </div>
+                  </Link>
+                ) : (
+                  <div key={lesson.id} className="flex items-center gap-3 p-4 opacity-60">
+                    <div className="h-9 w-9 rounded-xl bg-muted flex items-center justify-center shrink-0 text-sm font-bold text-muted-foreground">
+                      <Lock className="h-4 w-4" />
+                    </div>
+                    <p className="text-[15px] font-semibold text-foreground truncate">{lesson.title}</p>
+                  </div>
+                )
+              ))}
+              {lessonsData.isPreview && lessonsData.total > lessonsData.lessons.length && (
+                <div className="p-4 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    {lessonsData.total - lessonsData.lessons.length} more lessons — join to unlock
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </section>
 
         <section className="grid grid-cols-2 gap-3">

@@ -1109,3 +1109,73 @@ components:
       properties:
         error:
           type: string
+
+    Lesson:
+      type: object
+      required: [id, groupId, title, position, isPublished, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        groupId:
+          type: integer
+        title:
+          type: string
+        body:
+          type: string
+          nullable: true
+        videoUrl:
+          type: string
+          nullable: true
+        attachmentUrl:
+          type: string
+          nullable: true
+        position:
+          type: integer
+        isPublished:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    LessonListResponse:
+      type: object
+      required: [lessons, isPreview, total]
+      properties:
+        lessons:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lesson'
+        isPreview:
+          type: boolean
+        total:
+          type: integer
+    LessonDetailResponse:
+      type: object
+      required: [lesson, isCreator]
+      properties:
+        lesson:
+          $ref: '#/components/schemas/Lesson'
+        prev:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            title:
+              type: string
+            position:
+              type: integer
+        next:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            title:
+              type: string
+            position:
+              type: integer
+        isCreator:
+          type: boolean

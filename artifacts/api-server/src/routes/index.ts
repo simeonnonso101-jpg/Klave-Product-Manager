@@ -11,6 +11,7 @@ import realtimeRouter from "./realtime";
 import directChatsRouter from "./directChats";
 import discoverRouter from "./discover";
 import storageRouter from "./storage";
+import lessonsRouter from "./lessons";
 
 const router: IRouter = Router();
 
@@ -29,5 +30,6 @@ router.use(dashboardRouter);
 router.use(realtimeRouter);
 router.use(directChatsRouter);
 router.use(storageRouter);
+router.use(lessonsRouter);
 
 export default router;

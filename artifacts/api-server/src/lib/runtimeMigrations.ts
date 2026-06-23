@@ -59,6 +59,28 @@ export async function runRuntimeMigrations(): Promise<void> {
       WHERE type = 'personal'
     `);
 
+    // 3) Create the lessons table if it doesn't exist yet. We inline the DDL
+    // here rather than using drizzle-kit push so that prod (Render → Neon)
+    // auto-applies on deploy without any manual step.
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS lessons (
+        id          SERIAL PRIMARY KEY,
+        group_id    INTEGER NOT NULL,
+        title       TEXT NOT NULL,
+        body        TEXT,
+        video_url   TEXT,
+        attachment_url TEXT,
+        position    INTEGER NOT NULL DEFAULT 0,
+        is_published BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS lessons_group_id_position_idx
+      ON lessons (group_id, position)
+    `);
+
     logger.info(
       { healedGroupCount, healedMemberCount },
       "Runtime migrations applied",

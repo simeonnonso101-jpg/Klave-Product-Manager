@@ -24,6 +24,8 @@ const GroupDetailPage = lazy(() => import("@/pages/group-detail"));
 const ProfilePage = lazy(() => import("@/pages/profile"));
 const ProfileEditPage = lazy(() => import("@/pages/profile-edit"));
 const PeoplePage = lazy(() => import("@/pages/people"));
+const LessonViewPage = lazy(() => import("@/pages/lesson-view"));
+const LessonEditPage = lazy(() => import("@/pages/lesson-edit"));
 
 function PageSkeleton() {
   return (
@@ -269,6 +271,9 @@ function ClerkProviderWithRoutes() {
               <Route path="/chat/:id" component={() => <Protected><ChatViewPage /></Protected>} />
               <Route path="/groups" component={() => <Protected><GroupsPage /></Protected>} />
               <Route path="/groups/new" component={() => <Protected><CreateGroupPage /></Protected>} />
+              <Route path="/groups/:id/lessons/new" component={() => <Protected><LessonEditPage /></Protected>} />
+              <Route path="/groups/:id/lessons/:lessonId/edit" component={() => <Protected><LessonEditPage /></Protected>} />
+              <Route path="/groups/:id/lessons/:lessonId" component={() => <Protected><LessonViewPage /></Protected>} />
               <Route path="/groups/:id" component={() => <Protected><GroupDetailPage /></Protected>} />
               <Route path="/wallet" component={() => <Protected><WalletPage /></Protected>} />
               <Route path="/grow" component={() => <Protected><GrowPage /></Protected>} />
