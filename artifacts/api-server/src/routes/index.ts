@@ -12,6 +12,7 @@ import directChatsRouter from "./directChats";
 import discoverRouter from "./discover";
 import storageRouter from "./storage";
 import lessonsRouter from "./lessons";
+import paystackRouter from "./paystack";
 
 const router: IRouter = Router();
 
@@ -31,5 +32,6 @@ router.use(realtimeRouter);
 router.use(directChatsRouter);
 router.use(storageRouter);
 router.use(lessonsRouter);
+router.use(paystackRouter);
 
 export default router;

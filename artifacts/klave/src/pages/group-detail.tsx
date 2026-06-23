@@ -117,26 +117,30 @@ export default function GroupDetailPage() {
     
     try {
       if (group.price && group.price > 0) {
-        await createPayment.mutateAsync({
-          data: {
-            userId: user.id,
-            groupId: group.id,
-            paymentMethod: "wallet"
+        // Redirect to Paystack checkout
+        const data = await customFetch<{ authorizationUrl: string; reference: string }>(
+          "/api/payments/paystack/initialize",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ groupId: group.id }),
           }
-        });
-        toast({ title: "Payment successful!", description: `Welcome to ${group.name}` });
+        );
+        // Full page redirect to Paystack hosted checkout
+        window.location.href = data.authorizationUrl;
+        return;
       } else {
         await addMember.mutateAsync({
           id: group.id,
           data: { userId: user.id, role: "student" }
         });
-        toast({ title: "Joined group successfully!", description: `Welcome to ${group.name}!` });
+        toast({ title: "Joined class successfully!", description: `Welcome to ${group.name}!` });
       }
       
       queryClient.invalidateQueries({ queryKey: getGetGroupQueryKey(group.id) });
       setLocation(`/chat/${group.id}`);
-    } catch (err) {
-      toast({ title: "Action failed", description: "Please check your wallet balance and try again.", variant: "destructive" });
+    } catch (err: any) {
+      toast({ title: "Action failed", description: err?.message ?? "Something went wrong. Please try again.", variant: "destructive" });
     } finally {
       setIsProcessing(false);
     }
