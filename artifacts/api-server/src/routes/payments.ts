@@ -66,6 +66,18 @@ router.post("/payments", async (req, res): Promise<void> => {
     return;
   }
   const amount = group.price ? parseFloat(group.price) : 0;
+
+  // Wallet payment: validate and deduct from student balance
+  if (parsed.data.paymentMethod === "wallet" && amount > 0) {
+    const [student] = await db.select().from(usersTable).where(eq(usersTable.id, parsed.data.userId)).limit(1);
+    const balance = parseFloat(student?.walletBalance ?? "0");
+    if (balance < amount) {
+      res.status(402).json({ error: "Insufficient wallet balance" });
+      return;
+    }
+    await db.execute(sql`UPDATE users SET wallet_balance = wallet_balance - ${amount} WHERE id = ${parsed.data.userId}`);
+  }
+
   const [payment] = await db.insert(paymentsTable).values({
     userId: parsed.data.userId,
     groupId: parsed.data.groupId,

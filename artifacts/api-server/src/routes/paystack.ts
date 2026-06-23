@@ -265,4 +265,109 @@ router.post("/payments/paystack/webhook", async (req: Request, res: Response): P
   res.sendStatus(200);
 });
 
+// ─── Wallet Top-up ──────────────────────────────────────────────────────────
+
+/**
+ * POST /wallet/topup/initialize
+ * Auth required. Body: { amount: number (NGN) }
+ */
+router.post("/wallet/topup/initialize", async (req: Request, res: Response): Promise<void> => {
+  const auth = (req as any).auth;
+  if (!auth?.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  const amount = parseFloat(req.body?.amount);
+  if (!amount || amount < 100) {
+    res.status(400).json({ error: "Minimum top-up is ₦100" });
+    return;
+  }
+
+  const [dbUser] = await db.select().from(usersTable).where(eq(usersTable.clerkId, auth.userId)).limit(1);
+  if (!dbUser) { res.status(404).json({ error: "User not found" }); return; }
+
+  const reference = `topup-${dbUser.id}-${Date.now()}`;
+  const amountKobo = Math.round(amount * 100);
+
+  const callbackBase = process.env.VITE_API_URL ?? `https://${process.env.REPLIT_DEV_DOMAIN}`;
+  const callbackUrl = `${callbackBase}/api/wallet/topup/callback?reference=${reference}`;
+
+  const data = await paystackPost("/transaction/initialize", {
+    email: dbUser.email,
+    amount: amountKobo,
+    reference,
+    callback_url: callbackUrl,
+    metadata: { type: "wallet_topup", userId: dbUser.id, amount },
+  });
+
+  if (!data.status) {
+    res.status(502).json({ error: "Paystack error", detail: data.message });
+    return;
+  }
+
+  res.json({ authorizationUrl: data.data.authorization_url, reference: data.data.reference });
+});
+
+/**
+ * GET /wallet/topup/verify/:reference
+ * Auth required. Frontend calls after redirect.
+ */
+router.get("/wallet/topup/verify/:reference", async (req: Request, res: Response): Promise<void> => {
+  const auth = (req as any).auth;
+  if (!auth?.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  const data = await paystackGet(`/transaction/verify/${encodeURIComponent(req.params.reference)}`);
+  if (!data.status || data.data?.status !== "success") {
+    res.status(402).json({ error: "Payment not successful" });
+    return;
+  }
+
+  const meta = data.data.metadata as { type: string; userId: number; amount: number };
+  if (meta.type !== "wallet_topup") { res.status(400).json({ error: "Wrong payment type" }); return; }
+
+  const amountNaira = data.data.amount / 100;
+
+  // Credit wallet
+  await db.execute(sql`UPDATE users SET wallet_balance = wallet_balance + ${amountNaira} WHERE id = ${meta.userId}`);
+  await db.insert(transactionsTable).values({
+    userId: meta.userId,
+    type: "credit",
+    amount: String(amountNaira),
+    description: `Wallet top-up via Paystack`,
+    status: "completed",
+  });
+
+  res.json({ success: true, amount: amountNaira });
+});
+
+/**
+ * GET /api/wallet/topup/callback
+ * Browser redirect from Paystack after top-up.
+ */
+router.get("/wallet/topup/callback", async (req: Request, res: Response): Promise<void> => {
+  const reference = req.query.reference as string;
+  if (!reference) { res.redirect("/?topup=error"); return; }
+
+  const data = await paystackGet(`/transaction/verify/${encodeURIComponent(reference)}`);
+  if (!data.status || data.data?.status !== "success") {
+    res.redirect(`/wallet?topup=failed`);
+    return;
+  }
+
+  const meta = data.data.metadata as { type: string; userId: number; amount: number };
+  const amountNaira = data.data.amount / 100;
+
+  try {
+    await db.execute(sql`UPDATE users SET wallet_balance = wallet_balance + ${amountNaira} WHERE id = ${meta.userId}`);
+    await db.insert(transactionsTable).values({
+      userId: meta.userId,
+      type: "credit",
+      amount: String(amountNaira),
+      description: `Wallet top-up via Paystack`,
+      status: "completed",
+    });
+  } catch { /* webhook will retry */ }
+
+  const appBase = process.env.VITE_APP_URL ?? "";
+  res.redirect(`${appBase}/wallet?topup=success&amount=${amountNaira}`);
+});
+
 export default router;

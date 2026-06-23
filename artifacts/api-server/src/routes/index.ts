@@ -13,6 +13,7 @@ import discoverRouter from "./discover";
 import storageRouter from "./storage";
 import lessonsRouter from "./lessons";
 import paystackRouter from "./paystack";
+import aiGroqRouter from "./ai-groq";
 
 const router: IRouter = Router();
 
@@ -33,5 +34,6 @@ router.use(directChatsRouter);
 router.use(storageRouter);
 router.use(lessonsRouter);
 router.use(paystackRouter);
+router.use(aiGroqRouter);
 
 export default router;

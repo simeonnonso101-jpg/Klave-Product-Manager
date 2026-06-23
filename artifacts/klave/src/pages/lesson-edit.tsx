@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useLocation, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { customFetch } from "@workspace/api-client-react";
-import { ArrowLeft, Check, Loader2, Video, BookOpen, Paperclip, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Video, BookOpen, Paperclip, Eye, EyeOff, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -84,6 +84,28 @@ export default function LessonEditPage() {
 
   const isPending = createLesson.isPending || updateLesson.isPending;
 
+  const [aiWriteLoading, setAiWriteLoading] = useState(false);
+  const handleAiWrite = async () => {
+    if (!title.trim()) {
+      toast({ title: "Enter a lesson title first", variant: "destructive" });
+      return;
+    }
+    setAiWriteLoading(true);
+    try {
+      const result = await customFetch<{ content: string }>("/api/ai/write-lesson", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: title.trim() }),
+      });
+      setBody(result.content);
+      toast({ title: "AI content ready", description: "Review and edit as needed before saving." });
+    } catch (err: any) {
+      toast({ title: "AI error", description: err?.message ?? "Could not generate content.", variant: "destructive" });
+    } finally {
+      setAiWriteLoading(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) { toast({ title: "Title is required", variant: "destructive" }); return; }
@@ -161,9 +183,22 @@ export default function LessonEditPage() {
         </section>
 
         <section className="space-y-2">
-          <Label htmlFor="lesson-body" className="font-semibold text-sm flex items-center gap-1.5">
-            <BookOpen className="h-4 w-4 text-muted-foreground" /> Content
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="lesson-body" className="font-semibold text-sm flex items-center gap-1.5">
+              <BookOpen className="h-4 w-4 text-muted-foreground" /> Content
+            </Label>
+            <button
+              type="button"
+              onClick={handleAiWrite}
+              disabled={aiWriteLoading}
+              className="flex items-center gap-1.5 text-xs font-semibold text-[#5A1DE6] dark:text-[#9F75FF] hover:opacity-80 disabled:opacity-50 transition-opacity"
+            >
+              {aiWriteLoading
+                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                : <Sparkles className="h-3.5 w-3.5" />}
+              {aiWriteLoading ? "Writing…" : "AI Write"}
+            </button>
+          </div>
           <Textarea
             id="lesson-body"
             value={body}

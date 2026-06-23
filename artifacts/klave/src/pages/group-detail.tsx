@@ -60,6 +60,15 @@ export default function GroupDetailPage() {
   const isMember = members?.some(m => m.userId === user?.id);
   const isCreator = user?.id === group?.creatorId;
 
+  // Fetch student's wallet balance so we can offer "Pay from wallet" option
+  const { data: walletSummary } = useQuery<{ availableBalance: number }>({
+    queryKey: ["walletBalance", user?.id],
+    queryFn: () => customFetch<{ availableBalance: number }>(`/api/wallet/summary?creatorId=${user?.id}`, { method: "GET" }),
+    enabled: !!user?.id,
+    retry: false,
+  });
+  const walletBalance = walletSummary?.availableBalance ?? 0;
+
   const getFallbackImage = (id: number) => {
     const images = [defaultImg1, defaultImg2, defaultImg3];
     return images[id % images.length];
@@ -146,6 +155,24 @@ export default function GroupDetailPage() {
     }
   };
 
+  const handleJoinWithWallet = async () => {
+    if (!user || !group) return;
+    setIsProcessing(true);
+    try {
+      await createPayment.mutateAsync({
+        data: { userId: user.id, groupId: group.id, paymentMethod: "wallet" },
+      });
+      toast({ title: "Joined!", description: `₦${group.price} deducted from your wallet. Welcome to ${group.name}!` });
+      queryClient.invalidateQueries({ queryKey: getGetGroupQueryKey(group.id) });
+      queryClient.invalidateQueries({ queryKey: ["walletBalance", user.id] });
+      setLocation(`/chat/${group.id}`);
+    } catch (err: any) {
+      toast({ title: "Wallet payment failed", description: err?.message ?? "Try paying with card instead.", variant: "destructive" });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   if (isLoadingGroup) {
     return (
       <div className="flex flex-col h-[100dvh] bg-background">
@@ -212,14 +239,37 @@ export default function GroupDetailPage() {
             </Button>
           </Link>
         ) : (
-          <Button 
-            className="w-full h-14 text-[17px] font-bold shadow-lg shadow-primary/20 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90" 
-            onClick={handleJoin}
-            disabled={isProcessing}
-          >
-            {isProcessing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-            {group.price ? `Pay $${group.price} to Join` : "Join for Free"}
-          </Button>
+          <div className="space-y-2">
+            {/* Wallet payment option — show if user has sufficient balance and class has a price */}
+            {group.price && group.price > 0 && walletBalance >= group.price && (
+              <Button
+                className="w-full h-14 text-[17px] font-bold shadow-lg rounded-2xl bg-gradient-to-r from-[#5A1DE6] to-[#3A0CA3] text-white hover:opacity-90 flex items-center justify-center gap-2"
+                onClick={handleJoinWithWallet}
+                disabled={isProcessing}
+              >
+                {isProcessing ? <Loader2 className="h-5 w-5 animate-spin" /> : <CreditCard className="h-5 w-5" />}
+                Pay ₦{group.price} from Wallet
+              </Button>
+            )}
+            {/* Wallet balance hint */}
+            {group.price && group.price > 0 && walletBalance > 0 && walletBalance < group.price && (
+              <p className="text-xs text-muted-foreground text-center">
+                Wallet: ₦{walletBalance.toLocaleString()} — not enough. <a href="/wallet" className="text-[#5A1DE6] font-semibold hover:underline">Top up</a> or pay with card below.
+              </p>
+            )}
+            {/* Card / Paystack button — always shown for paid classes; used for free classes too */}
+            <Button
+              className="w-full h-14 text-[17px] font-bold shadow-lg shadow-primary/20 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
+              onClick={handleJoin}
+              disabled={isProcessing}
+              variant={group.price && group.price > 0 && walletBalance >= group.price ? "outline" : "default"}
+            >
+              {isProcessing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+              {group.price && group.price > 0 && walletBalance >= group.price
+                ? "Pay with Card instead"
+                : group.price ? `Pay ₦${group.price} to Join` : "Join for Free"}
+            </Button>
+          </div>
         )}
 
         {isCreator && (

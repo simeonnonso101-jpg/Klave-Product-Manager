@@ -1,10 +1,10 @@
-import { useGetWalletSummary, useListTransactions, useWithdrawFunds, useGetCurrentUser, getListTransactionsQueryKey, getGetWalletSummaryQueryKey } from "@workspace/api-client-react";
+import { useGetWalletSummary, useListTransactions, useWithdrawFunds, useGetCurrentUser, getListTransactionsQueryKey, getGetWalletSummaryQueryKey, customFetch } from "@workspace/api-client-react";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowUpRight, ArrowDownRight, Wallet as WalletIcon, Building, Clock, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Wallet as WalletIcon, Building, Clock, CheckCircle2, AlertCircle, Loader2, Plus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,6 +32,47 @@ export default function WalletPage() {
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [bankName, setBankName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
+
+  const [isTopupOpen, setIsTopupOpen] = useState(false);
+  const [topupAmount, setTopupAmount] = useState("");
+  const [isTopupLoading, setIsTopupLoading] = useState(false);
+
+  // Show toast when returning from Paystack top-up redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("topup");
+    const amount = params.get("amount");
+    if (status === "success") {
+      toast({ title: "Wallet funded!", description: amount ? `₦${parseFloat(amount).toLocaleString()} added to your wallet.` : "Funds added successfully." });
+      queryClient.invalidateQueries({ queryKey: getGetWalletSummaryQueryKey({ creatorId: userId }) });
+      queryClient.invalidateQueries({ queryKey: getListTransactionsQueryKey({ userId }) });
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (status === "failed") {
+      toast({ title: "Top-up failed", description: "Your payment was not completed.", variant: "destructive" });
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
+  const handleTopup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const amount = parseFloat(topupAmount);
+    if (isNaN(amount) || amount < 100) {
+      toast({ title: "Minimum top-up is ₦100", variant: "destructive" });
+      return;
+    }
+    setIsTopupLoading(true);
+    try {
+      const data = await customFetch<{ authorizationUrl: string }>("/api/wallet/topup/initialize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount }),
+      });
+      window.location.href = data.authorizationUrl;
+    } catch (err: any) {
+      toast({ title: "Could not start payment", description: err?.message ?? "Please try again.", variant: "destructive" });
+      setIsTopupLoading(false);
+    }
+  };
 
   const handleWithdraw = (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,11 +147,48 @@ export default function WalletPage() {
                   ${summary?.availableBalance?.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00'}
                 </div>
               )}
-              <div className="mt-6 sm:mt-8">
+              <div className="mt-6 sm:mt-8 flex gap-3">
+                {/* Add Funds */}
+                <Dialog open={isTopupOpen} onOpenChange={setIsTopupOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="secondary" className="flex-1 h-12 rounded-xl font-bold bg-white/20 text-white hover:bg-white/30 shadow-md text-[15px] border border-white/30">
+                      <Plus className="mr-2 h-5 w-5" /> Add Funds
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[400px]">
+                    <form onSubmit={handleTopup}>
+                      <DialogHeader>
+                        <DialogTitle>Add Funds to Wallet</DialogTitle>
+                        <DialogDescription>Fund your wallet via Paystack. Minimum ₦100.</DialogDescription>
+                      </DialogHeader>
+                      <div className="py-4 space-y-2">
+                        <Label htmlFor="topup-amount" className="font-semibold">Amount (₦)</Label>
+                        <Input
+                          id="topup-amount"
+                          type="number"
+                          min="100"
+                          step="100"
+                          placeholder="e.g. 5000"
+                          value={topupAmount}
+                          onChange={(e) => setTopupAmount(e.target.value)}
+                          required
+                          className="h-12 rounded-xl font-mono text-lg"
+                        />
+                      </div>
+                      <DialogFooter>
+                        <Button type="submit" disabled={isTopupLoading || !topupAmount} className="h-12 rounded-xl w-full text-base font-bold">
+                          {isTopupLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Redirecting…</> : "Pay with Paystack"}
+                        </Button>
+                      </DialogFooter>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+
+                {/* Withdraw */}
                 <Dialog open={isWithdrawOpen} onOpenChange={setIsWithdrawOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="secondary" className="w-full h-12 rounded-xl font-bold bg-white text-[#5A1DE6] hover:bg-white/95 shadow-md text-[16px]">
-                      <Building className="mr-2 h-5 w-5" /> Withdraw to Bank
+                    <Button variant="secondary" className="flex-1 h-12 rounded-xl font-bold bg-white text-[#5A1DE6] hover:bg-white/95 shadow-md text-[16px]">
+                      <Building className="mr-2 h-5 w-5" /> Withdraw
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[425px]">
@@ -167,7 +245,7 @@ export default function WalletPage() {
                     </form>
                   </DialogContent>
                 </Dialog>
-              </div>
+              </div> {/* end flex gap-3 */}
             </CardContent>
           </Card>
 

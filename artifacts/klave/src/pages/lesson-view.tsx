@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { customFetch } from "@workspace/api-client-react";
 import {
   ArrowLeft, ChevronLeft, ChevronRight, Pencil, Trash2,
-  BookOpen, Video, Paperclip, Loader2, Eye, EyeOff,
+  BookOpen, Video, Paperclip, Loader2, Eye, EyeOff, Sparkles, ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,9 @@ import {
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 
 type Lesson = {
   id: number; groupId: number; title: string; body: string | null;
@@ -108,6 +111,62 @@ export default function LessonViewPage() {
     queryFn: () => customFetch<LessonDetail>(`/api/groups/${groupId}/lessons/${lessonId}`, { method: "GET" }),
     enabled: !!groupId && !!lessonId,
   });
+
+  type AISummary = { overview: string; keyTakeaways: string[]; followUpQuestion: string };
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [aiSummary, setAiSummary] = useState<AISummary | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const [qaOpen, setQaOpen] = useState(false);
+  const [qaQuestion, setQaQuestion] = useState("");
+  const [qaAnswer, setQaAnswer] = useState("");
+  const [qaLoading, setQaLoading] = useState(false);
+
+  const handleSummarize = async () => {
+    if (!data?.lesson.body) {
+      toast({ title: "No content to summarise", description: "Add some lesson content first.", variant: "destructive" });
+      return;
+    }
+    setAiLoading(true);
+    setSummaryOpen(true);
+    setAiSummary(null);
+    try {
+      const result = await customFetch<AISummary>("/api/ai/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: data.lesson.body, title: data.lesson.title }),
+      });
+      setAiSummary(result);
+    } catch (err: any) {
+      toast({ title: "AI error", description: err?.message ?? "Could not generate summary.", variant: "destructive" });
+      setSummaryOpen(false);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleAskAI = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!qaQuestion.trim()) return;
+    setQaLoading(true);
+    setQaAnswer("");
+    try {
+      const result = await customFetch<{ answer: string }>("/api/ai/assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: qaQuestion,
+          groupId,
+          lessonContent: data?.lesson.body ?? "",
+        }),
+      });
+      setQaAnswer(result.answer);
+    } catch (err: any) {
+      toast({ title: "AI error", description: err?.message ?? "Could not get answer.", variant: "destructive" });
+    } finally {
+      setQaLoading(false);
+    }
+  };
 
   const togglePublish = useMutation({
     mutationFn: (published: boolean) =>
@@ -241,10 +300,102 @@ export default function LessonViewPage() {
           {lesson.videoUrl && <VideoEmbed url={lesson.videoUrl} />}
 
           {lesson.body && lesson.body.trim() && (
-            <section>
+            <section className="space-y-3">
+              {/* AI action buttons */}
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 rounded-full text-xs gap-1.5 border-[#5A1DE6]/30 text-[#5A1DE6] dark:text-[#9F75FF] hover:bg-[#5A1DE6]/10"
+                  onClick={handleSummarize}
+                  disabled={aiLoading}
+                >
+                  {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                  Summarise
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 rounded-full text-xs gap-1.5 border-[#5A1DE6]/30 text-[#5A1DE6] dark:text-[#9F75FF] hover:bg-[#5A1DE6]/10"
+                  onClick={() => { setQaOpen(true); setQaAnswer(""); setQaQuestion(""); }}
+                >
+                  <Sparkles className="h-3.5 w-3.5" /> Ask AI
+                </Button>
+              </div>
               <LessonBody body={lesson.body} />
             </section>
           )}
+
+          {/* AI Summary Dialog */}
+          <Dialog open={summaryOpen} onOpenChange={setSummaryOpen}>
+            <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-[#5A1DE6]" /> AI Lesson Summary
+                </DialogTitle>
+              </DialogHeader>
+              {aiLoading ? (
+                <div className="flex items-center justify-center py-10">
+                  <Loader2 className="h-6 w-6 animate-spin text-[#5A1DE6]" />
+                </div>
+              ) : aiSummary ? (
+                <div className="space-y-4 text-sm">
+                  <div>
+                    <p className="font-semibold text-foreground mb-1">Overview</p>
+                    <p className="text-muted-foreground leading-relaxed">{aiSummary.overview}</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground mb-2">Key Takeaways</p>
+                    <ul className="space-y-1.5">
+                      {aiSummary.keyTakeaways.map((t, i) => (
+                        <li key={i} className="flex items-start gap-2 text-muted-foreground">
+                          <span className="mt-0.5 h-4 w-4 rounded-full bg-[#5A1DE6]/10 text-[#5A1DE6] text-[10px] flex items-center justify-center shrink-0 font-bold">{i + 1}</span>
+                          {t}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="p-3 bg-[#F59E0B]/10 rounded-xl border border-[#F59E0B]/30">
+                    <p className="text-[11px] font-bold text-[#F59E0B] uppercase tracking-wider mb-1">Think about this</p>
+                    <p className="text-foreground text-sm">{aiSummary.followUpQuestion}</p>
+                  </div>
+                </div>
+              ) : null}
+            </DialogContent>
+          </Dialog>
+
+          {/* AI Q&A Dialog */}
+          <Dialog open={qaOpen} onOpenChange={setQaOpen}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-[#5A1DE6]" /> Ask AI about this lesson
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleAskAI} className="space-y-4">
+                <input
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#5A1DE6]/40 placeholder:text-muted-foreground"
+                  placeholder="e.g. Can you explain the main concept in simpler terms?"
+                  value={qaQuestion}
+                  onChange={(e) => setQaQuestion(e.target.value)}
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  disabled={qaLoading || !qaQuestion.trim()}
+                  className="w-full h-10 rounded-full bg-gradient-to-r from-[#5A1DE6] to-[#3A0CA3] text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {qaLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  {qaLoading ? "Thinking…" : "Ask"}
+                </button>
+                {qaAnswer && (
+                  <div className="rounded-2xl bg-muted/50 p-4 text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                    {qaAnswer}
+                  </div>
+                )}
+              </form>
+            </DialogContent>
+          </Dialog>
 
           {lesson.attachmentUrl && (
             <a
