@@ -112,7 +112,7 @@ router.post("/payments/paystack/initialize", async (req: Request, res: Response)
   const [dbUser] = await db
     .select()
     .from(usersTable)
-    .where(eq(usersTable.clerkId, auth.userId))
+    .where(eq(usersTable.clerkUserId, auth.userId))
     .limit(1);
 
   if (!dbUser) {
@@ -181,7 +181,7 @@ router.get("/payments/paystack/verify/:reference", async (req: Request, res: Res
     return;
   }
 
-  const data = await paystackGet(`/transaction/verify/${encodeURIComponent(reference)}`);
+  const data = await paystackGet(`/transaction/verify/${encodeURIComponent(String(reference))}`);
 
   if (!data.status || data.data?.status !== "success") {
     res.status(402).json({ error: "Payment not successful", detail: data.data?.status ?? data.message });
@@ -281,7 +281,7 @@ router.post("/wallet/topup/initialize", async (req: Request, res: Response): Pro
     return;
   }
 
-  const [dbUser] = await db.select().from(usersTable).where(eq(usersTable.clerkId, auth.userId)).limit(1);
+  const [dbUser] = await db.select().from(usersTable).where(eq(usersTable.clerkUserId, auth.userId)).limit(1);
   if (!dbUser) { res.status(404).json({ error: "User not found" }); return; }
 
   const reference = `topup-${dbUser.id}-${Date.now()}`;
@@ -314,7 +314,7 @@ router.get("/wallet/topup/verify/:reference", async (req: Request, res: Response
   const auth = (req as any).auth;
   if (!auth?.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
 
-  const data = await paystackGet(`/transaction/verify/${encodeURIComponent(req.params.reference)}`);
+  const data = await paystackGet(`/transaction/verify/${encodeURIComponent(String(req.params.reference))}`);
   if (!data.status || data.data?.status !== "success") {
     res.status(402).json({ error: "Payment not successful" });
     return;
