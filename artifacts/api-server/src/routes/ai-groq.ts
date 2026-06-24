@@ -1,4 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
+import { getAuth } from "@clerk/express";
 import { db, messagesTable, groupsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 
@@ -37,7 +38,7 @@ async function groqChat(messages: { role: string; content: string }[], maxTokens
 router.post("/ai/assistant", async (req: Request, res: Response): Promise<void> => {
   if (!GROQ_API_KEY) { noKey(res); return; }
 
-  const auth = (req as any).auth;
+  const auth = getAuth(req);
   if (!auth?.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
 
   const { question, groupId, lessonContent } = req.body ?? {};
@@ -101,7 +102,7 @@ Keep answers focused, practical, and under 300 words unless a longer explanation
 router.post("/ai/summarize", async (req: Request, res: Response): Promise<void> => {
   if (!GROQ_API_KEY) { noKey(res); return; }
 
-  const auth = (req as any).auth;
+  const auth = getAuth(req);
   if (!auth?.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
 
   const { content, title } = req.body ?? {};
@@ -155,7 +156,7 @@ Respond in this exact JSON format:
 router.post("/ai/write-lesson", async (req: Request, res: Response): Promise<void> => {
   if (!GROQ_API_KEY) { noKey(res); return; }
 
-  const auth = (req as any).auth;
+  const auth = getAuth(req);
   if (!auth?.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
 
   const { title, prompt, subject } = req.body ?? {};

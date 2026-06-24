@@ -1,4 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
+import { getAuth } from "@clerk/express";
 import { db, paymentsTable, groupsTable, usersTable, groupMembersTable, transactionsTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import crypto from "node:crypto";
@@ -84,7 +85,7 @@ async function fulfillPayment(groupId: number, userId: number, amountKobo: numbe
  * Returns: { authorizationUrl, reference }
  */
 router.post("/payments/paystack/initialize", async (req: Request, res: Response): Promise<void> => {
-  const auth = (req as any).auth;
+  const auth = getAuth(req);
   if (!auth?.userId) {
     res.status(401).json({ error: "Unauthorized" });
     return;
@@ -169,7 +170,7 @@ router.post("/payments/paystack/initialize", async (req: Request, res: Response)
  * Auth required. Called by frontend after redirect back.
  */
 router.get("/payments/paystack/verify/:reference", async (req: Request, res: Response): Promise<void> => {
-  const auth = (req as any).auth;
+  const auth = getAuth(req);
   if (!auth?.userId) {
     res.status(401).json({ error: "Unauthorized" });
     return;
@@ -272,7 +273,7 @@ router.post("/payments/paystack/webhook", async (req: Request, res: Response): P
  * Auth required. Body: { amount: number (NGN) }
  */
 router.post("/wallet/topup/initialize", async (req: Request, res: Response): Promise<void> => {
-  const auth = (req as any).auth;
+  const auth = getAuth(req);
   if (!auth?.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
 
   const amount = parseFloat(req.body?.amount);
@@ -311,7 +312,7 @@ router.post("/wallet/topup/initialize", async (req: Request, res: Response): Pro
  * Auth required. Frontend calls after redirect.
  */
 router.get("/wallet/topup/verify/:reference", async (req: Request, res: Response): Promise<void> => {
-  const auth = (req as any).auth;
+  const auth = getAuth(req);
   if (!auth?.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
 
   const data = await paystackGet(`/transaction/verify/${encodeURIComponent(String(req.params.reference))}`);
