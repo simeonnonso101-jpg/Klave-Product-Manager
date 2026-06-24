@@ -37,9 +37,28 @@ export default function WalletPage() {
   const [topupAmount, setTopupAmount] = useState("");
   const [isTopupLoading, setIsTopupLoading] = useState(false);
 
-  // Show toast when returning from Paystack top-up redirect
+  // Handle return from Paystack — verify payment and credit wallet
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+
+    // New flow: frontend-driven verification via ?paystack_ref=
+    const ref = params.get("paystack_ref");
+    if (ref) {
+      window.history.replaceState({}, "", window.location.pathname);
+      customFetch<{ success: boolean; amount: number }>(`/api/wallet/topup/verify/${encodeURIComponent(ref)}`, { method: "GET" })
+        .then((data) => {
+          toast({ title: "Wallet funded! 🎉", description: `₦${data.amount.toLocaleString()} added to your wallet.` });
+          queryClient.invalidateQueries({ queryKey: getGetWalletSummaryQueryKey({ creatorId: userId }) });
+          queryClient.invalidateQueries({ queryKey: getListTransactionsQueryKey({ userId }) });
+        })
+        .catch((err: any) => {
+          // Payment may already have been verified (duplicate redirect) — just refresh silently
+          queryClient.invalidateQueries({ queryKey: getGetWalletSummaryQueryKey({ creatorId: userId }) });
+        });
+      return;
+    }
+
+    // Legacy flow: server-side callback sets ?topup=success
     const status = params.get("topup");
     const amount = params.get("amount");
     if (status === "success") {
@@ -65,7 +84,7 @@ export default function WalletPage() {
       const data = await customFetch<{ authorizationUrl: string }>("/api/wallet/topup/initialize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount }),
+        body: JSON.stringify({ amount, frontendUrl: window.location.origin }),
       });
       window.location.href = data.authorizationUrl;
     } catch (err: any) {

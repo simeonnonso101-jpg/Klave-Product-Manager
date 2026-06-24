@@ -132,7 +132,7 @@ export default function GroupDetailPage() {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ groupId: group.id }),
+            body: JSON.stringify({ groupId: group.id, frontendUrl: window.location.origin }),
           }
         );
         // Full page redirect to Paystack hosted checkout

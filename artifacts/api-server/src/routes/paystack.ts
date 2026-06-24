@@ -137,8 +137,13 @@ router.post("/payments/paystack/initialize", async (req: Request, res: Response)
 
   const reference = `klave-${groupId}-${dbUser.id}-${Date.now()}`;
 
-  const callbackBase = process.env.VITE_API_URL ?? `https://${process.env.REPLIT_DEV_DOMAIN}`;
-  const callbackUrl = `${callbackBase}/api/payments/paystack/callback?reference=${reference}`;
+  // Use frontendUrl sent by the browser so Paystack always redirects back to the
+  // correct domain (useklave.com in prod, localhost in dev). Fall back to the
+  // API origin for legacy server-side callback handling.
+  const frontendOrigin = (req.body?.frontendUrl as string | undefined)?.replace(/\/+$/, "")
+    ?? process.env.FRONTEND_URL
+    ?? `https://${process.env.REPLIT_DEV_DOMAIN ?? "localhost"}`;
+  const callbackUrl = `${frontendOrigin}/paystack-callback?reference=${reference}`;
 
   const data = await paystackPost("/transaction/initialize", {
     email: dbUser.email,
@@ -288,8 +293,11 @@ router.post("/wallet/topup/initialize", async (req: Request, res: Response): Pro
   const reference = `topup-${dbUser.id}-${Date.now()}`;
   const amountKobo = Math.round(amount * 100);
 
-  const callbackBase = process.env.VITE_API_URL ?? `https://${process.env.REPLIT_DEV_DOMAIN}`;
-  const callbackUrl = `${callbackBase}/api/wallet/topup/callback?reference=${reference}`;
+  // Point Paystack back to the frontend so the wallet page verifies and credits
+  const frontendOrigin = (req.body?.frontendUrl as string | undefined)?.replace(/\/+$/, "")
+    ?? process.env.FRONTEND_URL
+    ?? `https://${process.env.REPLIT_DEV_DOMAIN ?? "localhost"}`;
+  const callbackUrl = `${frontendOrigin}/wallet?paystack_ref=${reference}`;
 
   const data = await paystackPost("/transaction/initialize", {
     email: dbUser.email,
