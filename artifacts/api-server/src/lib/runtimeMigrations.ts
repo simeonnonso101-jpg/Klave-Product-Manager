@@ -81,6 +81,9 @@ export async function runRuntimeMigrations(): Promise<void> {
       ON lessons (group_id, position)
     `);
 
+    // 4) Add reference column to transactions (used for Paystack transfer codes)
+    await db.execute(sql`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS reference TEXT`);
+
     logger.info(
       { healedGroupCount, healedMemberCount },
       "Runtime migrations applied",

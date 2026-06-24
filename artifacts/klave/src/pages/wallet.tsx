@@ -1,13 +1,14 @@
-import { useGetWalletSummary, useListTransactions, useWithdrawFunds, useGetCurrentUser, getListTransactionsQueryKey, getGetWalletSummaryQueryKey, customFetch } from "@workspace/api-client-react";
+import { useGetWalletSummary, useListTransactions, useWithdrawFunds, useGetCurrentUser, useListBanks, useResolveAccount, getListTransactionsQueryKey, getGetWalletSummaryQueryKey, customFetch } from "@workspace/api-client-react";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowUpRight, ArrowDownRight, Wallet as WalletIcon, Building, Clock, CheckCircle2, AlertCircle, Loader2, Plus } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Wallet as WalletIcon, Building, Clock, CheckCircle2, AlertCircle, Loader2, Plus, BadgeCheck } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -27,15 +28,23 @@ export default function WalletPage() {
     { query: { enabled: !!user } as any }
   );
 
+  const { data: banks = [] } = useListBanks();
+  const resolveAccount = useResolveAccount();
   const withdraw = useWithdrawFunds();
-  const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
-  const [withdrawAmount, setWithdrawAmount] = useState("");
-  const [bankName, setBankName] = useState("");
-  const [accountNumber, setAccountNumber] = useState("");
 
+  // Top-up state
   const [isTopupOpen, setIsTopupOpen] = useState(false);
   const [topupAmount, setTopupAmount] = useState("");
   const [isTopupLoading, setIsTopupLoading] = useState(false);
+
+  // Withdraw state
+  const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [bankCode, setBankCode] = useState("");
+  const [selectedBankName, setSelectedBankName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [resolvedName, setResolvedName] = useState("");
+  const [isResolving, setIsResolving] = useState(false);
 
   // Handle return from Paystack — verify payment and credit wallet
   useEffect(() => {
@@ -51,8 +60,7 @@ export default function WalletPage() {
           queryClient.invalidateQueries({ queryKey: getGetWalletSummaryQueryKey({ creatorId: userId }) });
           queryClient.invalidateQueries({ queryKey: getListTransactionsQueryKey({ userId }) });
         })
-        .catch((err: any) => {
-          // Payment may already have been verified (duplicate redirect) — just refresh silently
+        .catch(() => {
           queryClient.invalidateQueries({ queryKey: getGetWalletSummaryQueryKey({ creatorId: userId }) });
         });
       return;
@@ -71,6 +79,30 @@ export default function WalletPage() {
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, []);
+
+  // Auto-resolve account name when account number reaches 10 digits and a bank is selected
+  useEffect(() => {
+    if (accountNumber.length === 10 && bankCode) {
+      setIsResolving(true);
+      setResolvedName("");
+      resolveAccount.mutate(
+        { data: { accountNumber, bankCode } },
+        {
+          onSuccess: (data) => {
+            setResolvedName(data.accountName);
+            setIsResolving(false);
+          },
+          onError: () => {
+            setResolvedName("");
+            setIsResolving(false);
+            toast({ title: "Account not found", description: "Check the account number and bank.", variant: "destructive" });
+          },
+        }
+      );
+    } else {
+      setResolvedName("");
+    }
+  }, [accountNumber, bankCode]);
 
   const handleTopup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,27 +134,30 @@ export default function WalletPage() {
       toast({ title: "Invalid amount", description: "Please enter a valid withdrawal amount.", variant: "destructive" });
       return;
     }
-    
-    withdraw.mutate({
-      data: {
-        userId,
-        amount,
-        bankDetails: `${bankName} - ${accountNumber}`
+    if (!bankCode || !accountNumber || !resolvedName) {
+      toast({ title: "Verify your account first", description: "Enter a 10-digit account number and select a bank.", variant: "destructive" });
+      return;
+    }
+
+    withdraw.mutate(
+      { data: { userId, amount, accountNumber, bankCode, bankName: selectedBankName, accountName: resolvedName } },
+      {
+        onSuccess: () => {
+          toast({ title: "Withdrawal initiated ✅", description: `₦${amount.toLocaleString()} is on its way to ${resolvedName}.` });
+          setIsWithdrawOpen(false);
+          setWithdrawAmount("");
+          setBankCode("");
+          setSelectedBankName("");
+          setAccountNumber("");
+          setResolvedName("");
+          queryClient.invalidateQueries({ queryKey: getGetWalletSummaryQueryKey({ creatorId: userId }) });
+          queryClient.invalidateQueries({ queryKey: getListTransactionsQueryKey({ userId }) });
+        },
+        onError: (err: any) => {
+          toast({ title: "Withdrawal failed", description: err?.message ?? "Please try again.", variant: "destructive" });
+        },
       }
-    }, {
-      onSuccess: () => {
-        toast({ title: "Withdrawal initiated", description: "Your funds will arrive in 2-3 business days." });
-        setIsWithdrawOpen(false);
-        setWithdrawAmount("");
-        setBankName("");
-        setAccountNumber("");
-        queryClient.invalidateQueries({ queryKey: getGetWalletSummaryQueryKey({ creatorId: userId }) });
-        queryClient.invalidateQueries({ queryKey: getListTransactionsQueryKey({ userId }) });
-      },
-      onError: () => {
-        toast({ title: "Withdrawal failed", description: "Failed to initiate withdrawal.", variant: "destructive" });
-      }
-    });
+    );
   };
 
   const getStatusIcon = (status: string) => {
@@ -163,7 +198,7 @@ export default function WalletPage() {
                 <Skeleton className="h-12 w-40 bg-white/20 mt-2" />
               ) : (
                 <div className="text-4xl sm:text-5xl font-bold tracking-tight">
-                  ${summary?.availableBalance?.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00'}
+                  ₦{summary?.availableBalance?.toLocaleString('en-NG', { minimumFractionDigits: 2 }) || '0.00'}
                 </div>
               )}
               <div className="mt-6 sm:mt-8 flex gap-3">
@@ -204,67 +239,101 @@ export default function WalletPage() {
                 </Dialog>
 
                 {/* Withdraw */}
-                <Dialog open={isWithdrawOpen} onOpenChange={setIsWithdrawOpen}>
+                <Dialog open={isWithdrawOpen} onOpenChange={(open) => {
+                  setIsWithdrawOpen(open);
+                  if (!open) { setWithdrawAmount(""); setBankCode(""); setSelectedBankName(""); setAccountNumber(""); setResolvedName(""); }
+                }}>
                   <DialogTrigger asChild>
                     <Button variant="secondary" className="flex-1 h-12 rounded-xl font-bold bg-white text-[#5A1DE6] hover:bg-white/95 shadow-md text-[16px]">
                       <Building className="mr-2 h-5 w-5" /> Withdraw
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px]">
+                  <DialogContent className="sm:max-w-[440px]">
                     <form onSubmit={handleWithdraw}>
                       <DialogHeader>
-                        <DialogTitle>Withdraw Funds</DialogTitle>
+                        <DialogTitle>Withdraw to Bank</DialogTitle>
                         <DialogDescription>
-                          Transfer funds to your business bank account. Available: ${summary?.availableBalance?.toLocaleString() || '0.00'}
+                          Available: <span className="font-semibold text-foreground">₦{summary?.availableBalance?.toLocaleString() || '0'}</span>. Funds arrive same day or next business day.
                         </DialogDescription>
                       </DialogHeader>
                       <div className="grid gap-4 py-4">
+                        {/* Bank selector */}
                         <div className="space-y-2">
-                          <Label htmlFor="amount" className="font-semibold">Amount ($)</Label>
-                          <Input 
-                            id="amount" 
-                            type="number" 
-                            placeholder="0.00" 
+                          <Label className="font-semibold">Bank</Label>
+                          <Select value={bankCode} onValueChange={(val) => {
+                            setBankCode(val);
+                            const bank = banks.find((b) => b.code === val);
+                            setSelectedBankName(bank?.name ?? "");
+                            setResolvedName("");
+                          }}>
+                            <SelectTrigger className="h-12 rounded-xl">
+                              <SelectValue placeholder="Select your bank…" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-60">
+                              {banks.map((b) => (
+                                <SelectItem key={b.code} value={b.code}>{b.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Account number */}
+                        <div className="space-y-2">
+                          <Label htmlFor="accountNumber" className="font-semibold">Account Number</Label>
+                          <div className="relative">
+                            <Input
+                              id="accountNumber"
+                              placeholder="10-digit account number"
+                              value={accountNumber}
+                              onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                              required
+                              className="h-12 rounded-xl font-mono pr-10"
+                            />
+                            {isResolving && (
+                              <Loader2 className="absolute right-3 top-3.5 h-5 w-5 animate-spin text-muted-foreground" />
+                            )}
+                          </div>
+                          {resolvedName && (
+                            <div className="flex items-center gap-2 px-1 text-emerald-600 text-sm font-semibold">
+                              <BadgeCheck className="h-4 w-4 shrink-0" />
+                              {resolvedName}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Amount */}
+                        <div className="space-y-2">
+                          <Label htmlFor="withdrawAmount" className="font-semibold">Amount (₦)</Label>
+                          <Input
+                            id="withdrawAmount"
+                            type="number"
+                            placeholder="0.00"
+                            min="100"
                             max={summary?.availableBalance || 0}
                             value={withdrawAmount}
                             onChange={(e) => setWithdrawAmount(e.target.value)}
-                            required 
+                            required
                             className="h-12 rounded-xl font-mono text-lg"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="bankName" className="font-semibold">Bank Name</Label>
-                          <Input 
-                            id="bankName" 
-                            placeholder="e.g. Chase Business" 
-                            value={bankName}
-                            onChange={(e) => setBankName(e.target.value)}
-                            required 
-                            className="h-12 rounded-xl"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="accountNumber" className="font-semibold">Account Number</Label>
-                          <Input 
-                            id="accountNumber" 
-                            placeholder="e.g. 123456789" 
-                            value={accountNumber}
-                            onChange={(e) => setAccountNumber(e.target.value)}
-                            required 
-                            className="h-12 rounded-xl font-mono"
                           />
                         </div>
                       </div>
                       <DialogFooter>
-                        <Button type="submit" disabled={withdraw.isPending || !withdrawAmount || !bankName || !accountNumber} className="h-12 rounded-xl w-full text-base font-bold shadow-md">
-                          {withdraw.isPending && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-                          Confirm Withdrawal
+                        <Button
+                          type="submit"
+                          disabled={withdraw.isPending || isResolving || !withdrawAmount || !bankCode || !accountNumber || !resolvedName}
+                          className="h-12 rounded-xl w-full text-base font-bold shadow-md"
+                        >
+                          {withdraw.isPending ? (
+                            <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Sending…</>
+                          ) : (
+                            "Withdraw to Bank"
+                          )}
                         </Button>
                       </DialogFooter>
                     </form>
                   </DialogContent>
                 </Dialog>
-              </div> {/* end flex gap-3 */}
+              </div>
             </CardContent>
           </Card>
 
@@ -278,19 +347,19 @@ export default function WalletPage() {
                 {isLoadingSummary ? (
                   <Skeleton className="h-8 w-20" />
                 ) : (
-                  <div className="text-2xl font-bold">${summary?.totalEarnings?.toLocaleString() || '0'}</div>
+                  <div className="text-2xl font-bold">₦{summary?.totalEarnings?.toLocaleString() || '0'}</div>
                 )}
               </CardContent>
             </Card>
             <Card className="bg-card border-none shadow-sm rounded-2xl">
               <CardHeader className="pb-1 pt-5 px-5">
-                <CardTitle className="text-[12px] font-bold text-muted-foreground uppercase tracking-wider">Pending</CardTitle>
+                <CardTitle className="text-[12px] font-bold text-muted-foreground uppercase tracking-wider">Withdrawn</CardTitle>
               </CardHeader>
               <CardContent className="px-5 pb-5">
                 {isLoadingSummary ? (
                   <Skeleton className="h-8 w-20" />
                 ) : (
-                  <div className="text-2xl font-bold">${summary?.pendingBalance?.toLocaleString() || '0'}</div>
+                  <div className="text-2xl font-bold">₦{summary?.totalWithdrawn?.toLocaleString() || '0'}</div>
                 )}
               </CardContent>
             </Card>
@@ -325,7 +394,7 @@ export default function WalletPage() {
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-[15px] truncate">{tx.description}</p>
                       <div className="flex items-center gap-1.5 mt-0.5 text-[12px] text-muted-foreground">
-                        {new Date(tx.createdAt).toLocaleDateString()} • 
+                        {new Date(tx.createdAt).toLocaleDateString()} •&nbsp;
                         <span className="flex items-center gap-1">
                           {getStatusIcon(tx.status)}
                           <span className="capitalize">{tx.status}</span>
@@ -335,7 +404,7 @@ export default function WalletPage() {
                     <div className={`font-bold text-[16px] whitespace-nowrap ${
                       tx.type === 'credit' ? 'text-emerald-600' : 'text-foreground'
                     }`}>
-                      {tx.type === 'credit' ? '+' : '-'}${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      {tx.type === 'credit' ? '+' : '-'}₦{tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </div>
                   </div>
                 ))}

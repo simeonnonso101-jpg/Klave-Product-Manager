@@ -434,12 +434,37 @@ export const ListTransactionsResponseItem = zod.object({
 export const ListTransactionsResponse = zod.array(ListTransactionsResponseItem);
 
 /**
- * @summary Withdraw funds from wallet
+ * @summary List Nigerian banks
+ */
+export const ListBanksResponseItem = zod.object({
+  name: zod.string(),
+  code: zod.string(),
+});
+export const ListBanksResponse = zod.array(ListBanksResponseItem);
+
+/**
+ * @summary Resolve bank account name from number + bank code
+ */
+export const ResolveAccountBody = zod.object({
+  accountNumber: zod.string(),
+  bankCode: zod.string(),
+});
+
+export const ResolveAccountResponse = zod.object({
+  accountName: zod.string(),
+  accountNumber: zod.string(),
+});
+
+/**
+ * @summary Withdraw funds from wallet via bank transfer
  */
 export const WithdrawFundsBody = zod.object({
   userId: zod.number(),
   amount: zod.number(),
-  bankDetails: zod.string(),
+  accountNumber: zod.string(),
+  bankCode: zod.string(),
+  bankName: zod.string(),
+  accountName: zod.string(),
 });
 
 /**

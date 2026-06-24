@@ -18,6 +18,7 @@ import type {
 
 import type {
   AddGroupMemberBody,
+  Bank,
   CreateGroupBody,
   CreatePaymentBody,
   CreateUserBody,
@@ -37,6 +38,8 @@ import type {
   Payment,
   ReplicateLectureBody,
   ReplicationJob,
+  ResolveAccountBody,
+  ResolveAccountResponse,
   SendMessageBody,
   Transaction,
   UpdateCurrentUserBody,
@@ -1772,7 +1775,158 @@ export function useListTransactions<
 }
 
 /**
- * @summary Withdraw funds from wallet
+ * @summary List Nigerian banks
+ */
+export const getListBanksUrl = () => {
+  return `/api/wallet/banks`;
+};
+
+export const listBanks = async (options?: RequestInit): Promise<Bank[]> => {
+  return customFetch<Bank[]>(getListBanksUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListBanksQueryKey = () => {
+  return [`/api/wallet/banks`] as const;
+};
+
+export const getListBanksQueryOptions = <
+  TData = Awaited<ReturnType<typeof listBanks>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof listBanks>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListBanksQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listBanks>>> = ({
+    signal,
+  }) => listBanks({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listBanks>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListBanksQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listBanks>>
+>;
+export type ListBanksQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List Nigerian banks
+ */
+
+export function useListBanks<
+  TData = Awaited<ReturnType<typeof listBanks>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof listBanks>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListBanksQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Resolve bank account name from number + bank code
+ */
+export const getResolveAccountUrl = () => {
+  return `/api/wallet/resolve-account`;
+};
+
+export const resolveAccount = async (
+  resolveAccountBody: ResolveAccountBody,
+  options?: RequestInit,
+): Promise<ResolveAccountResponse> => {
+  return customFetch<ResolveAccountResponse>(getResolveAccountUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(resolveAccountBody),
+  });
+};
+
+export const getResolveAccountMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof resolveAccount>>,
+    TError,
+    { data: BodyType<ResolveAccountBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof resolveAccount>>,
+  TError,
+  { data: BodyType<ResolveAccountBody> },
+  TContext
+> => {
+  const mutationKey = ["resolveAccount"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof resolveAccount>>,
+    { data: BodyType<ResolveAccountBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return resolveAccount(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ResolveAccountMutationResult = NonNullable<
+  Awaited<ReturnType<typeof resolveAccount>>
+>;
+export type ResolveAccountMutationBody = BodyType<ResolveAccountBody>;
+export type ResolveAccountMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Resolve bank account name from number + bank code
+ */
+export const useResolveAccount = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof resolveAccount>>,
+    TError,
+    { data: BodyType<ResolveAccountBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof resolveAccount>>,
+  TError,
+  { data: BodyType<ResolveAccountBody> },
+  TContext
+> => {
+  return useMutation(getResolveAccountMutationOptions(options));
+};
+
+/**
+ * @summary Withdraw funds from wallet via bank transfer
  */
 export const getWithdrawFundsUrl = () => {
   return `/api/wallet/withdraw`;
@@ -1835,7 +1989,7 @@ export type WithdrawFundsMutationBody = BodyType<WithdrawBody>;
 export type WithdrawFundsMutationError = ErrorType<unknown>;
 
 /**
- * @summary Withdraw funds from wallet
+ * @summary Withdraw funds from wallet via bank transfer
  */
 export const useWithdrawFunds = <
   TError = ErrorType<unknown>,

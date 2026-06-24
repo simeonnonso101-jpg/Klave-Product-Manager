@@ -423,11 +423,45 @@ paths:
                 items:
                   $ref: "#/components/schemas/Transaction"
 
+  /wallet/banks:
+    get:
+      operationId: listBanks
+      tags: [wallet]
+      summary: List Nigerian banks
+      responses:
+        "200":
+          description: List of banks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bank"
+
+  /wallet/resolve-account:
+    post:
+      operationId: resolveAccount
+      tags: [wallet]
+      summary: Resolve bank account name from number + bank code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResolveAccountBody"
+      responses:
+        "200":
+          description: Account resolved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResolveAccountResponse"
+
   /wallet/withdraw:
     post:
       operationId: withdrawFunds
       tags: [wallet]
-      summary: Withdraw funds from wallet
+      summary: Withdraw funds from wallet via bank transfer
       requestBody:
         required: true
         content:
@@ -975,6 +1009,33 @@ components:
         - status
         - createdAt
 
+    Bank:
+      type: object
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+      required: [name, code]
+
+    ResolveAccountBody:
+      type: object
+      properties:
+        accountNumber:
+          type: string
+        bankCode:
+          type: string
+      required: [accountNumber, bankCode]
+
+    ResolveAccountResponse:
+      type: object
+      properties:
+        accountName:
+          type: string
+        accountNumber:
+          type: string
+      required: [accountName, accountNumber]
+
     WithdrawBody:
       type: object
       properties:
@@ -982,12 +1043,21 @@ components:
           type: integer
         amount:
           type: number
-        bankDetails:
+        accountNumber:
+          type: string
+        bankCode:
+          type: string
+        bankName:
+          type: string
+        accountName:
           type: string
       required:
         - userId
         - amount
-        - bankDetails
+        - accountNumber
+        - bankCode
+        - bankName
+        - accountName
 
     ReplicateLectureBody:
       type: object

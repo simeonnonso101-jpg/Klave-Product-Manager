@@ -333,10 +333,28 @@ export interface Transaction {
   createdAt: string;
 }
 
+export interface Bank {
+  name: string;
+  code: string;
+}
+
+export interface ResolveAccountBody {
+  accountNumber: string;
+  bankCode: string;
+}
+
+export interface ResolveAccountResponse {
+  accountName: string;
+  accountNumber: string;
+}
+
 export interface WithdrawBody {
   userId: number;
   amount: number;
-  bankDetails: string;
+  accountNumber: string;
+  bankCode: string;
+  bankName: string;
+  accountName: string;
 }
 
 export interface ReplicateLectureBody {
@@ -396,6 +414,44 @@ export interface UploadUrlResponse {
 
 export interface ErrorEnvelope {
   error: string;
+}
+
+export interface Lesson {
+  id: number;
+  groupId: number;
+  title: string;
+  body?: string | null;
+  videoUrl?: string | null;
+  attachmentUrl?: string | null;
+  position: number;
+  isPublished: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LessonListResponse {
+  lessons: Lesson[];
+  isPreview: boolean;
+  total: number;
+}
+
+export type LessonDetailResponsePrev = {
+  id?: number;
+  title?: string;
+  position?: number;
+} | null;
+
+export type LessonDetailResponseNext = {
+  id?: number;
+  title?: string;
+  position?: number;
+} | null;
+
+export interface LessonDetailResponse {
+  lesson: Lesson;
+  prev?: LessonDetailResponsePrev;
+  next?: LessonDetailResponseNext;
+  isCreator: boolean;
 }
 
 export type UpdateCurrentUserBody = {

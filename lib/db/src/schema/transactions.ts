@@ -10,6 +10,7 @@ export const transactionsTable = pgTable("transactions", {
   description: text("description").notNull(),
   status: text("status").notNull().default("completed"),
   groupId: integer("group_id"),
+  reference: text("reference"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
