@@ -183,21 +183,26 @@ export default function LessonEditPage() {
         </section>
 
         <section className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="lesson-body" className="font-semibold text-sm flex items-center gap-1.5">
-              <BookOpen className="h-4 w-4 text-muted-foreground" /> Content
-            </Label>
+          <Label htmlFor="lesson-body" className="font-semibold text-sm flex items-center gap-1.5">
+            <BookOpen className="h-4 w-4 text-muted-foreground" /> Content
+          </Label>
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-[#5A1DE6]/5 border border-[#5A1DE6]/15">
+            <Sparkles className="h-3.5 w-3.5 text-[#5A1DE6] shrink-0" />
+            <p className="flex-1 text-xs text-[#5A1DE6] font-medium">Enter a title above, then let AI draft the lesson content for you.</p>
             <button
               type="button"
               onClick={handleAiWrite}
               disabled={aiWriteLoading}
-              className="flex items-center gap-1.5 text-xs font-semibold text-[#5A1DE6] dark:text-[#9F75FF] hover:opacity-80 disabled:opacity-50 transition-opacity"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#5A1DE6] text-white text-xs font-semibold hover:bg-[#4A0DD6] disabled:opacity-50 transition-colors shrink-0"
             >
               {aiWriteLoading
-                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                : <Sparkles className="h-3.5 w-3.5" />}
+                ? <Loader2 className="h-3 w-3 animate-spin" />
+                : <Sparkles className="h-3 w-3" />}
               {aiWriteLoading ? "Writing…" : "AI Write"}
             </button>
+          </div>
+          <div className="flex items-center justify-between">
+            <span />
           </div>
           <Textarea
             id="lesson-body"

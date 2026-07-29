@@ -1,6 +1,5 @@
 import { useEffect, useRef, lazy, Suspense } from "react";
 import { ClerkProvider, SignIn, SignUp, Show, useClerk, useAuth } from "@clerk/react";
-import { useTheme } from "next-themes";
 import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
@@ -234,14 +233,12 @@ function Protected({ children }: { children: React.ReactNode }) {
 
 function ClerkProviderWithRoutes() {
   const [, setLocation] = useLocation();
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
 
   return (
     <ClerkProvider
       publishableKey={clerkPubKey}
       proxyUrl={clerkProxyUrl}
-      appearance={getClerkAppearance(isDark)}
+      appearance={getClerkAppearance(false)}
       localization={{
         signIn: {
           start: {

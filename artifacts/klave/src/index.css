@@ -2,8 +2,6 @@
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
 
-@custom-variant dark (&:is(.dark *));
-
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
@@ -45,67 +43,43 @@
 }
 
 :root {
-  /* Off-white background #F5F5F5 */
-  --background: 0 0% 96%;
-  --foreground: 255 25% 14%;
+  /* Clean neutral white background */
+  --background: 220 20% 97%;
+  --foreground: 224 30% 12%;
 
-  --border: 255 15% 90%;
-  --input: 255 15% 90%;
-  --ring: 258 81% 51%;
+  --border: 220 14% 88%;
+  --input: 220 14% 88%;
+  --ring: 258 76% 48%;
 
   --card: 0 0% 100%;
-  --card-foreground: 255 25% 14%;
-  --card-border: 255 15% 90%;
+  --card-foreground: 224 30% 12%;
+  --card-border: 220 14% 90%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 255 25% 14%;
-  --popover-border: 255 15% 90%;
+  --popover-foreground: 224 30% 12%;
+  --popover-border: 220 14% 88%;
 
-  /* Primary purple #5A1DE6 */
-  --primary: 258 81% 51%;
+  /* Primary deep violet */
+  --primary: 258 76% 48%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 258 30% 96%;
-  --secondary-foreground: 255 25% 18%;
+  --secondary: 258 28% 96%;
+  --secondary-foreground: 224 30% 18%;
 
-  --muted: 0 0% 94%;
-  --muted-foreground: 255 8% 42%;
+  --muted: 220 16% 93%;
+  --muted-foreground: 220 10% 46%;
 
-  /* Accent orange #F59E0B - the bold logo-dot orange */
-  --accent: 38 92% 50%;
-  --accent-foreground: 255 25% 14%;
+  /* Accent indigo tint for subtle highlights */
+  --accent: 258 40% 94%;
+  --accent-foreground: 258 76% 38%;
 
-  --destructive: 0 70% 50%;
+  --destructive: 0 66% 48%;
   --destructive-foreground: 0 0% 98%;
 
   --app-font-sans: 'Inter', sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: Menlo, monospace;
-  --radius: 0.75rem;
-}
-
-.dark {
-  --background: 255 25% 8%;
-  --foreground: 0 0% 98%;
-  --border: 255 15% 18%;
-  --input: 255 15% 18%;
-  --ring: 258 81% 60%;
-  --card: 255 25% 11%;
-  --card-foreground: 0 0% 98%;
-  --card-border: 255 15% 18%;
-  --popover: 255 25% 11%;
-  --popover-foreground: 0 0% 98%;
-  --popover-border: 255 15% 18%;
-  --primary: 258 81% 60%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 255 15% 18%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 255 15% 16%;
-  --muted-foreground: 255 8% 65%;
-  --accent: 40 100% 55%;
-  --accent-foreground: 255 25% 8%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 98%;
+  --radius: 0.625rem;
 }
 
 @layer base {
