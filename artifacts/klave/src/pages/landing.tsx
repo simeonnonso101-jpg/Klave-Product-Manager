@@ -72,13 +72,13 @@ export default function LandingPage() {
   return (
     <div className="relative min-h-[100dvh] bg-background text-foreground overflow-hidden">
       {/* Soft brand glows — visible in both light and dark, just calibrated per theme */}
-      <div className="pointer-events-none absolute -top-32 -right-32 h-96 w-96 rounded-full bg-[#5A1DE6]/15 dark:bg-[#5A1DE6]/25 blur-3xl" />
-      <div className="pointer-events-none absolute top-1/3 -left-32 h-96 w-96 rounded-full bg-[#F59E0B]/10 dark:bg-[#F59E0B]/15 blur-3xl" />
+      <div className="pointer-events-none absolute -top-32 -right-32 h-96 w-96 rounded-full bg-[#5A1DE6]/15 blur-3xl" />
+      <div className="pointer-events-none absolute top-1/3 -left-32 h-96 w-96 rounded-full bg-[#F59E0B]/10 blur-3xl" />
 
       {/* Header */}
       <header className="relative px-4 sm:px-6 md:px-10 py-4 sm:py-5 flex items-center justify-between max-w-6xl mx-auto gap-2">
         <div className="flex items-center gap-2 shrink-0">
-          <img src={`${basePath}/logo.svg`} alt="Klave" className="h-7 sm:h-9 dark:invert dark:brightness-0 dark:contrast-200" />
+          <img src={`${basePath}/logo.svg`} alt="Klave" className="h-7 sm:h-9" />
         </div>
         <div className="flex items-center gap-1 sm:gap-2">
           <Link href="/sign-in">
@@ -102,7 +102,7 @@ export default function LandingPage() {
         <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
           <div className="space-y-5 sm:space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-card/80 border border-border text-xs sm:text-sm shadow-sm">
-              <Sparkles className="h-4 w-4 text-[#5A1DE6] dark:text-[#9B7BFF]" />
+              <Sparkles className="h-4 w-4 text-[#5A1DE6]" />
               <span className="font-medium text-foreground">Built for course creators</span>
             </div>
 
@@ -138,13 +138,13 @@ export default function LandingPage() {
 
             <div className="flex flex-wrap gap-4 pt-3 text-sm text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
-                <Check className="h-4 w-4 text-[#5A1DE6] dark:text-[#9B7BFF]" /> Free to start
+                <Check className="h-4 w-4 text-[#5A1DE6]" /> Free to start
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <Check className="h-4 w-4 text-[#5A1DE6] dark:text-[#9B7BFF]" /> Instant payouts
+                <Check className="h-4 w-4 text-[#5A1DE6]" /> Instant payouts
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <Check className="h-4 w-4 text-[#5A1DE6] dark:text-[#9B7BFF]" /> Built-in wallet
+                <Check className="h-4 w-4 text-[#5A1DE6]" /> Built-in wallet
               </span>
             </div>
           </div>
@@ -181,7 +181,7 @@ export default function LandingPage() {
               </div>
               <div className="flex items-center justify-between pt-3 mt-3 border-t border-border">
                 <div className="text-xs text-muted-foreground">Today's earnings</div>
-                <div className="text-base font-bold text-[#5A1DE6] dark:text-[#9B7BFF] flex items-center gap-1.5">
+                <div className="text-base font-bold text-[#5A1DE6] flex items-center gap-1.5">
                   +$1,247.00
                   <span className="inline-block w-2 h-2 rounded-full bg-[#F59E0B]" />
                 </div>
@@ -198,7 +198,7 @@ export default function LandingPage() {
             { icon: Zap, value: "<10s", label: "Avg. payout time" },
           ].map((s) => (
             <div key={s.label} className="text-center">
-              <div className="inline-flex items-center justify-center h-9 w-9 sm:h-11 sm:w-11 rounded-xl bg-[#5A1DE6]/10 dark:bg-[#5A1DE6]/20 text-[#5A1DE6] dark:text-[#9B7BFF] mb-2">
+              <div className="inline-flex items-center justify-center h-9 w-9 sm:h-11 sm:w-11 rounded-xl bg-[#5A1DE6]/10 text-[#5A1DE6] mb-2">
                 <s.icon className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
               <div className="text-xl sm:text-3xl font-bold text-foreground tracking-tight">{s.value}</div>
@@ -230,7 +230,7 @@ export default function LandingPage() {
         {/* Testimonials */}
         <section className="mt-20 sm:mt-28">
           <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F59E0B]/15 text-[#a35c00] dark:text-[#F59E0B] text-xs sm:text-sm font-semibold mb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F59E0B]/15 text-[#a35c00] text-xs sm:text-sm font-semibold mb-4">
               <Star className="h-3.5 w-3.5 fill-[#F59E0B] text-[#F59E0B]" />
               Loved by creators
             </div>
@@ -287,7 +287,7 @@ export default function LandingPage() {
                 <div className="flex items-start justify-between gap-4">
                   <span className="font-semibold text-foreground text-[15px] sm:text-base">{f.q}</span>
                   <ChevronDown
-                    className={`h-5 w-5 text-[#5A1DE6] dark:text-[#9B7BFF] shrink-0 mt-0.5 transition-transform duration-200 ${
+                    className={`h-5 w-5 text-[#5A1DE6] shrink-0 mt-0.5 transition-transform duration-200 ${
                       openFaq === i ? "rotate-180" : ""
                     }`}
                   />

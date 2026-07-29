@@ -201,7 +201,7 @@ export default function ProfileEditPage() {
           <button
             type="button"
             onClick={handleChangePicture}
-            className="text-[13px] font-semibold text-[#5A1DE6] dark:text-[#9F75FF] hover:underline"
+            className="text-[13px] font-semibold text-[#5A1DE6] hover:underline"
           >
             Change picture
           </button>
@@ -237,7 +237,7 @@ export default function ProfileEditPage() {
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
               {checkState === "checking" && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-              {checkState === "ok" && <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
+              {checkState === "ok" && <Check className="h-4 w-4 text-emerald-600" />}
               {(checkState === "taken" || checkState === "invalid") && <X className="h-4 w-4 text-red-500" />}
             </div>
           </div>

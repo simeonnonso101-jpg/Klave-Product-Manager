@@ -50,7 +50,7 @@ export default function ProfilePage() {
                 <div className="min-w-0 flex-1">
                   <h2 className="text-xl font-bold text-foreground leading-tight truncate">{user?.name || clerkUser?.fullName || 'Loading...'}</h2>
                   {(user as any)?.username ? (
-                    <p className="text-sm text-[#5A1DE6] dark:text-[#9F75FF] font-semibold truncate mt-0.5">@{(user as any).username}</p>
+                    <p className="text-sm text-[#5A1DE6] font-semibold truncate mt-0.5">@{(user as any).username}</p>
                   ) : null}
                   <p className="text-xs text-muted-foreground truncate mt-0.5">{user?.email || clerkUser?.primaryEmailAddress?.emailAddress}</p>
                   <div className="flex items-center gap-2 mt-2">
@@ -98,7 +98,7 @@ export default function ProfilePage() {
             <Link href="/profile/edit" className="block border-t border-border/60">
               <button className="w-full flex items-center gap-3 px-5 py-4 hover:bg-muted/50 transition-colors text-left">
                 <div className="h-9 w-9 rounded-lg bg-[#5A1DE6]/10 flex items-center justify-center shrink-0">
-                  <UserCog className="w-4 h-4 text-[#5A1DE6] dark:text-[#9F75FF]" />
+                  <UserCog className="w-4 h-4 text-[#5A1DE6]" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-foreground text-sm">Edit profile</div>
@@ -116,7 +116,7 @@ export default function ProfilePage() {
               className="w-full flex items-center gap-3 px-5 py-4 hover:bg-muted/50 transition-colors text-left"
             >
               <div className="h-9 w-9 rounded-lg bg-[#5A1DE6]/10 flex items-center justify-center shrink-0">
-                <Mail className="w-4 h-4 text-[#5A1DE6] dark:text-[#9F75FF]" />
+                <Mail className="w-4 h-4 text-[#5A1DE6]" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-foreground text-sm">Account & Security</div>
@@ -130,7 +130,7 @@ export default function ProfilePage() {
               className="w-full flex items-center gap-3 px-5 py-4 hover:bg-muted/50 transition-colors text-left"
             >
               <div className="h-9 w-9 rounded-lg bg-[#5A1DE6]/10 flex items-center justify-center shrink-0">
-                <Bell className="w-4 h-4 text-[#5A1DE6] dark:text-[#9F75FF]" />
+                <Bell className="w-4 h-4 text-[#5A1DE6]" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-foreground text-sm">Notifications</div>
@@ -166,7 +166,7 @@ function Row({ label, value, muted = false }: { label: string; value: string; mu
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | number }) {
   return (
     <div className="bg-card rounded-2xl border border-border/60 shadow-sm p-3 flex flex-col items-center text-center min-w-0">
-      <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#5A1DE6]/15 to-[#3A0CA3]/10 text-[#5A1DE6] dark:text-[#9F75FF] flex items-center justify-center mb-1.5">
+      <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#5A1DE6]/15 to-[#3A0CA3]/10 text-[#5A1DE6] flex items-center justify-center mb-1.5">
         {icon}
       </div>
       <div className="text-lg font-bold text-foreground leading-tight truncate w-full">{value}</div>

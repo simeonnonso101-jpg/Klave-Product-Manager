@@ -169,11 +169,11 @@ export default function CreateGroupPage() {
             <div className="px-5 pt-5 pb-2 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-lg bg-[#5A1DE6]/10 flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-[#5A1DE6] dark:text-[#9F75FF]" />
+                  <Sparkles className="w-4 h-4 text-[#5A1DE6]" />
                 </div>
                 <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Cover Art</h3>
               </div>
-              <button type="button" onClick={() => setShowUrlInput(v => !v)} className="text-[11px] font-semibold text-[#5A1DE6] dark:text-[#9F75FF] hover:underline">
+              <button type="button" onClick={() => setShowUrlInput(v => !v)} className="text-[11px] font-semibold text-[#5A1DE6] hover:underline">
                 {showUrlInput ? "Hide URL" : "Use URL"}
               </button>
             </div>
@@ -248,7 +248,7 @@ export default function CreateGroupPage() {
           <Card className="bg-card border-border/60 shadow-sm rounded-2xl">
             <div className="px-5 pt-5 pb-2 flex items-center gap-2">
               <div className="h-8 w-8 rounded-lg bg-[#5A1DE6]/10 flex items-center justify-center">
-                <ImageIcon className="w-4 h-4 text-[#5A1DE6] dark:text-[#9F75FF]" />
+                <ImageIcon className="w-4 h-4 text-[#5A1DE6]" />
               </div>
               <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Course Details</h3>
             </div>

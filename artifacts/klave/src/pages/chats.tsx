@@ -255,11 +255,11 @@ export default function ChatsPage() {
                             </p>
                             <div className="flex gap-1.5 items-center shrink-0">
                               {group.price ? (
-                                <Badge className="text-[10px] px-2 py-0 h-[18px] bg-[#F59E0B]/15 text-[#B45309] dark:text-[#F59E0B] border border-[#F59E0B]/30 leading-none rounded-full font-semibold">
+                                <Badge className="text-[10px] px-2 py-0 h-[18px] bg-[#F59E0B]/15 text-[#B45309] border border-[#F59E0B]/30 leading-none rounded-full font-semibold">
                                   Paid
                                 </Badge>
                               ) : (
-                                <Badge className="text-[10px] px-2 py-0 h-[18px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 leading-none rounded-full font-semibold">
+                                <Badge className="text-[10px] px-2 py-0 h-[18px] bg-emerald-500/10 text-emerald-700 border border-emerald-500/30 leading-none rounded-full font-semibold">
                                   Free
                                 </Badge>
                               )}
@@ -286,7 +286,7 @@ export default function ChatsPage() {
                       </div>
                       <h2 className="text-[15px] font-bold tracking-tight text-foreground">Suggested for you</h2>
                     </div>
-                    <Link href="/groups" className="text-[13px] font-semibold text-[#5A1DE6] dark:text-[#9F75FF] flex items-center gap-1 hover:gap-1.5 transition-all">
+                    <Link href="/groups" className="text-[13px] font-semibold text-[#5A1DE6] flex items-center gap-1 hover:gap-1.5 transition-all">
                       See all <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
                   </div>
@@ -315,11 +315,11 @@ export default function ChatsPage() {
                                 <Users className="h-3 w-3" /> Trending
                               </span>
                               {group.price ? (
-                                <span className="text-[11px] font-bold text-[#5A1DE6] dark:text-[#9F75FF]">
+                                <span className="text-[11px] font-bold text-[#5A1DE6]">
                                   ${(group.price / 100).toFixed(0)}/mo
                                 </span>
                               ) : (
-                                <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">Free</span>
+                                <span className="text-[11px] font-bold text-emerald-600">Free</span>
                               )}
                             </div>
                           </div>

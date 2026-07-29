@@ -155,7 +155,7 @@ export default function PeoplePage() {
                     {pending ? (
                       <Loader2 className="h-4 w-4 text-[#5A1DE6] animate-spin shrink-0" />
                     ) : (
-                      <span className="text-[12px] font-semibold text-[#5A1DE6] dark:text-[#9F75FF] shrink-0">
+                      <span className="text-[12px] font-semibold text-[#5A1DE6] shrink-0">
                         Message
                       </span>
                     )}

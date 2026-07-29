@@ -6,7 +6,7 @@ import { setAuthTokenGetter } from "@workspace/api-client-react";
 import { setPusherTokenGetter } from "@/lib/pusher";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { ThemeProvider } from "@/components/theme-provider";
+
 
 // Landing is the first thing signed-out users see — keep eager so it paints instantly.
 import LandingPage from "@/pages/landing";
@@ -140,8 +140,8 @@ function getClerkAppearance(isDark: boolean) {
 function AuthScreenShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative flex min-h-[100dvh] items-center justify-center bg-background px-4 py-12 overflow-hidden">
-      <div className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-[#5A1DE6]/20 dark:bg-[#5A1DE6]/25 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-32 -left-24 h-80 w-80 rounded-full bg-[#F59E0B]/15 dark:bg-[#F59E0B]/15 blur-3xl" />
+      <div className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-[#5A1DE6]/20 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 -left-24 h-80 w-80 rounded-full bg-[#F59E0B]/15 blur-3xl" />
       <div className="relative w-full max-w-md">{children}</div>
     </div>
   );
@@ -291,11 +291,9 @@ function ClerkProviderWithRoutes() {
 
 function App() {
   return (
-    <ThemeProvider>
-      <WouterRouter base={basePath}>
-        <ClerkProviderWithRoutes />
-      </WouterRouter>
-    </ThemeProvider>
+    <WouterRouter base={basePath}>
+      <ClerkProviderWithRoutes />
+    </WouterRouter>
   );
 }
 

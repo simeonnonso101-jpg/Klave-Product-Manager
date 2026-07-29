@@ -295,31 +295,31 @@ export default function LessonViewPage() {
 
           {lesson.videoUrl && <VideoEmbed url={lesson.videoUrl} />}
 
-          {lesson.body && lesson.body.trim() && (
-            <section className="space-y-4">
-              {/* AI Tools bar */}
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-[#5A1DE6]/5 border border-[#5A1DE6]/15">
-                <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                  <Sparkles className="h-3.5 w-3.5 text-[#5A1DE6] shrink-0" />
-                  <span className="text-xs font-semibold text-[#5A1DE6]">AI Study Tools</span>
-                </div>
-                <button
-                  onClick={handleSummarize}
-                  disabled={aiLoading}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#5A1DE6] text-white text-xs font-semibold hover:bg-[#4A0DD6] disabled:opacity-50 transition-colors shrink-0"
-                >
-                  {aiLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-                  Summarise
-                </button>
-                <button
-                  onClick={() => { setQaOpen(true); setQaAnswer(""); setQaQuestion(""); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#5A1DE6]/30 text-[#5A1DE6] text-xs font-semibold hover:bg-[#5A1DE6]/5 transition-colors shrink-0"
-                >
-                  <MessageSquare className="h-3 w-3" />
-                  Ask AI
-                </button>
-              </div>
+          {/* AI Tools bar — always visible */}
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-[#5A1DE6]/5 border border-[#5A1DE6]/15">
+            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+              <Sparkles className="h-3.5 w-3.5 text-[#5A1DE6] shrink-0" />
+              <span className="text-xs font-semibold text-[#5A1DE6]">AI Study Tools</span>
+            </div>
+            <button
+              onClick={handleSummarize}
+              disabled={aiLoading || !lesson.body?.trim()}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#5A1DE6] text-white text-xs font-semibold hover:bg-[#4A0DD6] disabled:opacity-50 transition-colors shrink-0"
+            >
+              {aiLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+              Summarise
+            </button>
+            <button
+              onClick={() => { setQaOpen(true); setQaAnswer(""); setQaQuestion(""); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#5A1DE6]/30 text-[#5A1DE6] text-xs font-semibold hover:bg-[#5A1DE6]/5 transition-colors shrink-0"
+            >
+              <MessageSquare className="h-3 w-3" />
+              Ask AI
+            </button>
+          </div>
 
+          {lesson.body && lesson.body.trim() && (
+            <section>
               <LessonBody body={lesson.body} />
             </section>
           )}

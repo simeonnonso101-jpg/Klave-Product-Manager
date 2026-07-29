@@ -1,4 +1,4 @@
-import { useGetGroup, useGetGroupStats, useListMessages, useSendMessage, useDeleteMessage, useReplicateLecture, useListGroups, useGetCurrentUser, getListMessagesQueryKey, getListReplicationJobsQueryKey, useListGroupMembers } from "@workspace/api-client-react";
+import { useGetGroup, useGetGroupStats, useListMessages, useSendMessage, useDeleteMessage, useReplicateLecture, useListGroups, useGetCurrentUser, getListMessagesQueryKey, getListReplicationJobsQueryKey, useListGroupMembers, customFetch } from "@workspace/api-client-react";
 import { useParams, Link, useLocation } from "wouter";
 import { ArrowLeft, Send, Sparkles, Image as ImageIcon, Trash2, Copy, Loader2, Smile, Mic, Plus, Camera, ChevronDown, CheckCheck, Check } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
@@ -81,6 +81,31 @@ export default function ChatViewPage() {
   const [targetGroupIds, setTargetGroupIds] = useState<number[]>([]);
   const [reactions, setReactions] = useState<Record<number, string[]>>({});
   const [showScrollDown, setShowScrollDown] = useState(false);
+
+  // AI Study Assistant state
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiQuestion, setAiQuestion] = useState("");
+  const [aiAnswer, setAiAnswer] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const handleAskAI = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!aiQuestion.trim()) return;
+    setAiLoading(true);
+    setAiAnswer("");
+    try {
+      const result = await customFetch<{ answer: string }>("/api/ai/assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: aiQuestion, groupId }),
+      });
+      setAiAnswer(result.answer);
+    } catch (err: any) {
+      toast({ title: "AI error", description: err?.message ?? "Could not get an answer.", variant: "destructive" });
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   // userId -> name. Cleared automatically after each user goes idle for 3s.
   const [typingUsers, setTypingUsers] = useState<Record<number, string>>({});
@@ -277,14 +302,11 @@ export default function ChatViewPage() {
   const displayInitial = (isDm ? (dmPeer?.name ?? "?") : group.name).charAt(0).toUpperCase();
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[hsl(258,30%,97%)] dark:bg-[hsl(258,18%,7%)] relative overflow-hidden">
-      {/* Subtle purple-dot background pattern (light) */}
-      <div className="absolute inset-0 opacity-50 pointer-events-none dark:hidden" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%235A1DE6\" fill-opacity=\"0.06\"%3E%3Ccircle cx=\"30\" cy=\"30\" r=\"2\"/%3E%3Ccircle cx=\"5\" cy=\"5\" r=\"1\"/%3E%3Ccircle cx=\"55\" cy=\"55\" r=\"1\"/%3E%3Ccircle cx=\"15\" cy=\"45\" r=\"1\"/%3E%3Ccircle cx=\"45\" cy=\"15\" r=\"1\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')" }}></div>
-      {/* Dark-mode background: soft purple radial wash + faint dot pattern */}
-      <div className="absolute inset-0 hidden dark:block pointer-events-none" style={{ background: "radial-gradient(circle at 20% 0%, rgba(90, 29, 230, 0.18) 0%, transparent 45%), radial-gradient(circle at 90% 100%, rgba(58, 12, 163, 0.22) 0%, transparent 50%)" }} />
-      <div className="absolute inset-0 hidden dark:block opacity-40 pointer-events-none" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.04\"%3E%3Ccircle cx=\"30\" cy=\"30\" r=\"2\"/%3E%3Ccircle cx=\"5\" cy=\"5\" r=\"1\"/%3E%3Ccircle cx=\"55\" cy=\"55\" r=\"1\"/%3E%3Ccircle cx=\"15\" cy=\"45\" r=\"1\"/%3E%3Ccircle cx=\"45\" cy=\"15\" r=\"1\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')" }} />
+    <div className="flex flex-col h-[100dvh] bg-[hsl(258,30%,97%)] relative overflow-hidden">
+      {/* Subtle purple-dot background pattern */}
+      <div className="absolute inset-0 opacity-50 pointer-events-none" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%235A1DE6\" fill-opacity=\"0.06\"%3E%3Ccircle cx=\"30\" cy=\"30\" r=\"2\"/%3E%3Ccircle cx=\"5\" cy=\"5\" r=\"1\"/%3E%3Ccircle cx=\"55\" cy=\"55\" r=\"1\"/%3E%3Ccircle cx=\"15\" cy=\"45\" r=\"1\"/%3E%3Ccircle cx=\"45\" cy=\"15\" r=\"1\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')" }}></div>
 
-      <header className="h-[68px] flex items-center justify-between px-2 bg-white/80 dark:bg-[hsl(258,18%,10%)]/85 backdrop-blur-xl border-b border-white/40 dark:border-white/10 shadow-sm z-20 shrink-0">
+      <header className="h-[68px] flex items-center justify-between px-2 bg-white border-b border-border shadow-sm z-20 shrink-0">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <Link href="/chats" className="p-2 rounded-full hover:bg-muted text-foreground transition-colors flex items-center shrink-0">
             <ArrowLeft className="h-5 w-5" />
@@ -298,12 +320,12 @@ export default function ChatViewPage() {
                 <AvatarImage src={displayAvatar || undefined} />
                 <AvatarFallback className="bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] text-white font-bold">{displayInitial}</AvatarFallback>
               </Avatar>
-              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white dark:border-[hsl(258,18%,10%)]" />
+              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white" />
             </div>
             <div className="flex flex-col min-w-0">
               <h2 className="text-base font-semibold leading-tight truncate">{displayName}</h2>
               {typingNames.length > 0 ? (
-                <span className="text-xs text-[#5A1DE6] dark:text-[#9B7BFF] mt-0.5 truncate font-medium flex items-center gap-1.5">
+                <span className="text-xs text-[#5A1DE6] mt-0.5 truncate font-medium flex items-center gap-1.5">
                   {typingNames.length === 1
                     ? `${typingNames[0]} is typing`
                     : typingNames.length === 2
@@ -327,11 +349,21 @@ export default function ChatViewPage() {
             </div>
           </div>
         </div>
-        {isCreator && (
-          <Button variant="ghost" size="icon" className="text-[#5A1DE6] hover:text-[#5A1DE6] hover:bg-[#5A1DE6]/10 mr-2 shrink-0" onClick={() => toast({ title: "AI Replicate", description: "Hover or long-press a message to replicate it." })}>
-            <Sparkles className="h-5 w-5" />
+        <div className="flex items-center gap-1 shrink-0 mr-1">
+          {isCreator && (
+            <Button variant="ghost" size="icon" className="h-9 w-9 text-[#5A1DE6] hover:bg-[#5A1DE6]/10 rounded-full" onClick={() => toast({ title: "AI Replicate", description: "Long-press any of your messages to replicate it to other classes." })}>
+              <Copy className="h-4 w-4" />
+            </Button>
+          )}
+          <Button
+            variant="ghost" size="icon"
+            className="h-9 w-9 text-[#5A1DE6] hover:bg-[#5A1DE6]/10 rounded-full"
+            onClick={() => setAiOpen(true)}
+            title="Ask AI"
+          >
+            <Sparkles className="h-4 w-4" />
           </Button>
-        )}
+        </div>
       </header>
 
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3 relative z-10 pb-20">
@@ -360,7 +392,7 @@ export default function ChatViewPage() {
               <div key={msg.id}>
               {showDateDivider && (
                 <div className="flex justify-center my-3">
-                  <span className="text-[11px] font-semibold tracking-wide bg-white/80 dark:bg-card/80 backdrop-blur-md text-muted-foreground px-3 py-1 rounded-full shadow-sm border border-border/40">
+                  <span className="text-[11px] font-semibold tracking-wide bg-white text-muted-foreground px-3 py-1 rounded-full shadow-sm border border-border/40">
                     {formatDayLabel(new Date(msg.createdAt))}
                   </span>
                 </div>
@@ -417,7 +449,7 @@ export default function ChatViewPage() {
                       className={`px-3.5 py-2 text-[15px] shadow-sm relative ${
                         isMe
                           ? "bg-gradient-to-br from-[#5A1DE6] to-[#3A0CA3] text-white shadow-[#5A1DE6]/20"
-                          : "bg-white dark:bg-[hsl(258,14%,14%)] text-foreground border border-transparent dark:border-white/5"
+                          : "bg-white text-foreground border border-border/40"
                       } ${
                         showTail && isMe ? "rounded-l-2xl rounded-tr-2xl rounded-br-sm" :
                         showTail && !isMe ? "rounded-r-2xl rounded-tl-2xl rounded-bl-sm" : "rounded-2xl"
@@ -429,7 +461,7 @@ export default function ChatViewPage() {
                       <span className="leading-relaxed whitespace-pre-wrap">{msg.content}</span>
 
                       <div className="flex justify-end items-center gap-1 mt-1 -mb-0.5 min-w-[50px]">
-                        <span className={`text-[10px] inline-block text-right ${isMe ? "text-white/75" : "text-black/45 dark:text-white/45"}`}>
+                        <span className={`text-[10px] inline-block text-right ${isMe ? "text-white/75" : "text-black/40"}`}>
                           {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                         {isMe && (
@@ -538,6 +570,42 @@ export default function ChatViewPage() {
           )}
         </form>
       </div>
+
+      {/* AI Study Assistant Dialog */}
+      <Dialog open={aiOpen} onOpenChange={(open) => { setAiOpen(open); if (!open) { setAiQuestion(""); setAiAnswer(""); } }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-[#5A1DE6]" /> AI Study Assistant
+            </DialogTitle>
+            <DialogDescription>
+              Ask anything about this class — the AI knows the course and recent messages.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleAskAI} className="space-y-3">
+            <input
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#5A1DE6]/30 placeholder:text-muted-foreground"
+              placeholder="e.g. What was covered in the last lesson?"
+              value={aiQuestion}
+              onChange={(e) => setAiQuestion(e.target.value)}
+              autoFocus
+            />
+            <button
+              type="submit"
+              disabled={aiLoading || !aiQuestion.trim()}
+              className="w-full h-10 rounded-full bg-[#5A1DE6] text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2 hover:bg-[#4A0DD6] transition-colors"
+            >
+              {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {aiLoading ? "Thinking…" : "Ask"}
+            </button>
+            {aiAnswer && (
+              <div className="rounded-xl bg-muted/60 border border-border p-4 text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                {aiAnswer}
+              </div>
+            )}
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* AI Replicate Dialog */}
       <Dialog open={!!replicateMessageId} onOpenChange={(open) => !open && setReplicateMessageId(null)}>

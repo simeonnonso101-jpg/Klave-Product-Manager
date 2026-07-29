@@ -311,7 +311,7 @@ export default function GroupDetailPage() {
             </h3>
             {isCreator && (
               <Link href={`/groups/${groupId}/lessons/new`}>
-                <Button variant="ghost" size="sm" className="text-sm text-[#5A1DE6] dark:text-[#9F75FF] font-semibold h-8 px-2 gap-1 hover:bg-[#5A1DE6]/10">
+                <Button variant="ghost" size="sm" className="text-sm text-[#5A1DE6] font-semibold h-8 px-2 gap-1 hover:bg-[#5A1DE6]/10">
                   <Plus className="h-4 w-4" /> Add
                 </Button>
               </Link>

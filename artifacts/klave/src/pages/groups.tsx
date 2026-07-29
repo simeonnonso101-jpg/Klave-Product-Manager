@@ -196,7 +196,7 @@ export default function GroupsPage() {
                 className={`inline-flex items-center px-3.5 py-1.5 text-sm font-semibold whitespace-nowrap rounded-full border transition-all ${
                   activeCategory === cat.label
                     ? "bg-gradient-to-r from-[#5A1DE6] to-[#3A0CA3] text-white border-transparent shadow-md shadow-[#5A1DE6]/25"
-                    : "bg-card text-foreground border-border/60 hover:border-[#5A1DE6]/40 hover:text-[#5A1DE6] dark:hover:text-[#9F75FF]"
+                    : "bg-card text-foreground border-border/60 hover:border-[#5A1DE6]/40 hover:text-[#5A1DE6]"
                 }`}
               >
                 {cat.icon} {cat.label}
@@ -302,7 +302,7 @@ export default function GroupsPage() {
                             </Link>
                           ) : g.isMember ? (
                             <Link href={`/groups/${g.id}`}>
-                              <Button size="sm" variant="outline" className="h-8 rounded-full text-[12px] font-bold gap-1 border-emerald-500/50 text-emerald-700 dark:text-emerald-400">
+                              <Button size="sm" variant="outline" className="h-8 rounded-full text-[12px] font-bold gap-1 border-emerald-500/50 text-emerald-700">
                                 <Check className="h-3.5 w-3.5" /> Joined
                               </Button>
                             </Link>
