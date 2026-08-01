@@ -7,7 +7,7 @@ const router: IRouter = Router();
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY ?? "";
 const GROQ_BASE = "https://api.groq.com/openai/v1";
-const MODEL = "llama3-70b-8192";
+const MODEL = "llama-3.3-70b-versatile";
 
 function noKey(res: Response) {
   res.status(503).json({ error: "AI features are not configured yet. Add GROQ_API_KEY to enable them." });
