@@ -84,6 +84,29 @@ export async function runRuntimeMigrations(): Promise<void> {
     // 4) Add reference column to transactions (used for Paystack transfer codes)
     await db.execute(sql`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS reference TEXT`);
 
+    // 5) Lesson completions — tracks which student has finished which lesson.
+    //    Unique on (user_id, lesson_id) so it's idempotent to re-mark complete.
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS lesson_completions (
+        id           SERIAL PRIMARY KEY,
+        user_id      INTEGER NOT NULL,
+        lesson_id    INTEGER NOT NULL,
+        group_id     INTEGER NOT NULL,
+        completed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        CONSTRAINT lesson_completions_user_lesson_uniq UNIQUE (user_id, lesson_id)
+      )
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS lesson_completions_group_idx
+      ON lesson_completions (group_id, user_id)
+    `);
+
+    // 6) Drip scheduling: allow setting a future release date per lesson.
+    await db.execute(sql`ALTER TABLE lessons ADD COLUMN IF NOT EXISTS publish_at TIMESTAMPTZ`);
+
+    // 7) Pinned announcements: mark one message per group as pinned.
+    await db.execute(sql`ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN NOT NULL DEFAULT FALSE`);
+
     logger.info(
       { healedGroupCount, healedMemberCount },
       "Runtime migrations applied",

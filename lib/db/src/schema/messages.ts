@@ -11,6 +11,7 @@ export const messagesTable = pgTable("messages", {
   mediaUrl: text("media_url"),
   isReplicated: boolean("is_replicated").notNull().default(false),
   replicationJobId: integer("replication_job_id"),
+  isPinned: boolean("is_pinned").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

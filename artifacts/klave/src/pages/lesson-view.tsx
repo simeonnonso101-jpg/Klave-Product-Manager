@@ -5,6 +5,7 @@ import { customFetch } from "@workspace/api-client-react";
 import {
   ArrowLeft, ChevronLeft, ChevronRight, Pencil, Trash2,
   BookOpen, Video, Paperclip, Loader2, Eye, EyeOff, Sparkles, MessageSquare,
+  CheckCircle2, Circle, Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,23 +23,25 @@ import {
 type Lesson = {
   id: number; groupId: number; title: string; body: string | null;
   videoUrl: string | null; attachmentUrl: string | null;
-  position: number; isPublished: boolean; createdAt: string; updatedAt: string;
+  position: number; isPublished: boolean; publishAt: string | null;
+  createdAt: string; updatedAt: string;
 };
 type Sibling = { id: number; title: string; position: number } | null;
-type LessonDetail = { lesson: Lesson; prev: Sibling; next: Sibling; isCreator: boolean };
+type LessonDetail = {
+  lesson: Lesson; prev: Sibling; next: Sibling;
+  isCreator: boolean; isCompleted: boolean; groupName: string;
+};
+type Progress = { completed: number; total: number; completedIds: number[]; courseComplete: boolean };
 
 function VideoEmbed({ url }: { url: string }) {
   const yt = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
   if (yt) {
     return (
       <div className="aspect-video rounded-xl overflow-hidden shadow-sm mb-6 bg-black">
-        <iframe
-          className="w-full h-full"
+        <iframe className="w-full h-full"
           src={`https://www.youtube.com/embed/${yt[1]}`}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          title="Lesson video"
-        />
+          allowFullScreen title="Lesson video" />
       </div>
     );
   }
@@ -46,22 +49,15 @@ function VideoEmbed({ url }: { url: string }) {
   if (vm) {
     return (
       <div className="aspect-video rounded-xl overflow-hidden shadow-sm mb-6 bg-black">
-        <iframe
-          className="w-full h-full"
+        <iframe className="w-full h-full"
           src={`https://player.vimeo.com/video/${vm[1]}`}
           allow="autoplay; fullscreen; picture-in-picture"
-          allowFullScreen
-          title="Lesson video"
-        />
+          allowFullScreen title="Lesson video" />
       </div>
     );
   }
   if (/\.(mp4|webm|ogg)(\?|$)/i.test(url)) {
-    return (
-      <video controls className="w-full rounded-xl shadow-sm mb-6 bg-black" src={url}>
-        Your browser doesn't support video playback.
-      </video>
-    );
+    return <video controls className="w-full rounded-xl shadow-sm mb-6 bg-black" src={url}>Your browser doesn't support video.</video>;
   }
   return (
     <a href={url} target="_blank" rel="noopener noreferrer"
@@ -108,11 +104,16 @@ export default function LessonViewPage() {
     enabled: !!groupId && !!lessonId,
   });
 
+  const { data: progress } = useQuery<Progress>({
+    queryKey: ["progress", groupId],
+    queryFn: () => customFetch<Progress>(`/api/groups/${groupId}/progress`, { method: "GET" }),
+    enabled: !!groupId,
+  });
+
   type AISummary = { overview: string; keyTakeaways: string[]; followUpQuestion: string };
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [aiSummary, setAiSummary] = useState<AISummary | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
-
   const [qaOpen, setQaOpen] = useState(false);
   const [qaQuestion, setQaQuestion] = useState("");
   const [qaAnswer, setQaAnswer] = useState("");
@@ -123,52 +124,69 @@ export default function LessonViewPage() {
       toast({ title: "No content to summarise", description: "Add some lesson content first.", variant: "destructive" });
       return;
     }
-    setAiLoading(true);
-    setSummaryOpen(true);
-    setAiSummary(null);
+    setAiLoading(true); setSummaryOpen(true); setAiSummary(null);
     try {
       const result = await customFetch<AISummary>("/api/ai/summarize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: data.lesson.body, title: data.lesson.title }),
       });
       setAiSummary(result);
     } catch (err: any) {
       toast({ title: "AI error", description: err?.message ?? "Could not generate summary.", variant: "destructive" });
       setSummaryOpen(false);
-    } finally {
-      setAiLoading(false);
-    }
+    } finally { setAiLoading(false); }
   };
 
   const handleAskAI = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!qaQuestion.trim()) return;
-    setQaLoading(true);
-    setQaAnswer("");
+    setQaLoading(true); setQaAnswer("");
     try {
       const result = await customFetch<{ answer: string }>("/api/ai/assistant", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          question: qaQuestion,
-          groupId,
-          lessonContent: data?.lesson.body ?? "",
-        }),
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: qaQuestion, groupId, lessonContent: data?.lesson.body ?? "" }),
       });
       setQaAnswer(result.answer);
     } catch (err: any) {
       toast({ title: "AI error", description: err?.message ?? "Could not get answer.", variant: "destructive" });
-    } finally {
-      setQaLoading(false);
-    }
+    } finally { setQaLoading(false); }
   };
+
+  const markComplete = useMutation({
+    mutationFn: () =>
+      customFetch<{ ok: boolean; completed: number; total: number; courseComplete: boolean }>(
+        `/api/groups/${groupId}/lessons/${lessonId}/complete`,
+        { method: "POST" }
+      ),
+    onSuccess: (result) => {
+      qc.invalidateQueries({ queryKey: ["lesson", groupId, lessonId] });
+      qc.invalidateQueries({ queryKey: ["progress", groupId] });
+      qc.invalidateQueries({ queryKey: ["lessons", groupId] });
+      if (result.courseComplete) {
+        toast({
+          title: "🎉 Course complete!",
+          description: "You've finished all lessons. Your certificate is ready!",
+        });
+      } else {
+        toast({ title: "Lesson marked as complete ✓" });
+      }
+    },
+  });
+
+  const unmarkComplete = useMutation({
+    mutationFn: () =>
+      customFetch(`/api/groups/${groupId}/lessons/${lessonId}/complete`, { method: "DELETE" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["lesson", groupId, lessonId] });
+      qc.invalidateQueries({ queryKey: ["progress", groupId] });
+      qc.invalidateQueries({ queryKey: ["lessons", groupId] });
+    },
+  });
 
   const togglePublish = useMutation({
     mutationFn: (published: boolean) =>
       customFetch(`/api/groups/${groupId}/lessons/${lessonId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        method: "PATCH", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isPublished: published }),
       }),
     onSuccess: () => {
@@ -179,8 +197,7 @@ export default function LessonViewPage() {
   });
 
   const deleteLesson = useMutation({
-    mutationFn: () =>
-      customFetch(`/api/groups/${groupId}/lessons/${lessonId}`, { method: "DELETE" }),
+    mutationFn: () => customFetch(`/api/groups/${groupId}/lessons/${lessonId}`, { method: "DELETE" }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["lessons", groupId] });
       toast({ title: "Lesson deleted" });
@@ -200,7 +217,6 @@ export default function LessonViewPage() {
           <Skeleton className="aspect-video w-full rounded-xl" />
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-5/6" />
-          <Skeleton className="h-4 w-4/6" />
         </div>
       </div>
     );
@@ -218,7 +234,8 @@ export default function LessonViewPage() {
     );
   }
 
-  const { lesson, prev, next, isCreator } = data;
+  const { lesson, prev, next, isCreator, isCompleted } = data;
+  const progressPct = progress && progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
 
   return (
     <div className="flex flex-col h-[100dvh] bg-background">
@@ -233,32 +250,18 @@ export default function LessonViewPage() {
         </div>
         {isCreator && (
           <div className="flex items-center gap-1 shrink-0">
-            <Button
-              variant="ghost" size="icon"
-              className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground"
-              onClick={() => togglePublish.mutate(!lesson.isPublished)}
-              disabled={togglePublish.isPending}
-              title={lesson.isPublished ? "Hide lesson" : "Publish lesson"}
-            >
-              {togglePublish.isPending
-                ? <Loader2 className="h-4 w-4 animate-spin" />
-                : lesson.isPublished ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground"
+              onClick={() => togglePublish.mutate(!lesson.isPublished)} disabled={togglePublish.isPending}
+              title={lesson.isPublished ? "Hide lesson" : "Publish lesson"}>
+              {togglePublish.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : lesson.isPublished ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
             </Button>
-            <Button
-              variant="ghost" size="icon"
-              className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground"
-              onClick={() => setLocation(`/groups/${groupId}/lessons/${lessonId}/edit`)}
-              title="Edit lesson"
-            >
+            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground"
+              onClick={() => setLocation(`/groups/${groupId}/lessons/${lessonId}/edit`)} title="Edit lesson">
               <Pencil className="h-4 w-4" />
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button
-                  variant="ghost" size="icon"
-                  className="h-9 w-9 rounded-full text-muted-foreground hover:text-destructive"
-                  title="Delete lesson"
-                >
+                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full text-muted-foreground hover:text-destructive" title="Delete lesson">
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </AlertDialogTrigger>
@@ -269,13 +272,9 @@ export default function LessonViewPage() {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    onClick={() => deleteLesson.mutate()}
-                    disabled={deleteLesson.isPending}
-                  >
-                    {deleteLesson.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-                    Delete
+                  <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={() => deleteLesson.mutate()} disabled={deleteLesson.isPending}>
+                    {deleteLesson.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null} Delete
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -283,6 +282,26 @@ export default function LessonViewPage() {
           </div>
         )}
       </header>
+
+      {/* Progress bar (students only) */}
+      {!isCreator && progress && progress.total > 0 && (
+        <div className="shrink-0 px-4 py-2 bg-white border-b border-border flex items-center gap-3">
+          <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-[#5A1DE6] to-[#3A0CA3] rounded-full transition-all duration-500"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+          <span className="text-xs font-bold text-[#5A1DE6] shrink-0">{progress.completed}/{progress.total}</span>
+          {progress.courseComplete && (
+            <Link href={`/groups/${groupId}/certificate`} className="shrink-0">
+              <button className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold hover:bg-amber-200 transition-colors">
+                <Award className="h-3 w-3" /> Certificate
+              </button>
+            </Link>
+          )}
+        </div>
+      )}
 
       {/* Body */}
       <div className="flex-1 overflow-y-auto">
@@ -295,115 +314,29 @@ export default function LessonViewPage() {
 
           {lesson.videoUrl && <VideoEmbed url={lesson.videoUrl} />}
 
-          {/* AI Tools bar — always visible */}
+          {/* AI Tools bar */}
           <div className="flex items-center gap-2 p-3 rounded-xl bg-[#5A1DE6]/5 border border-[#5A1DE6]/15">
             <div className="flex items-center gap-1.5 flex-1 min-w-0">
               <Sparkles className="h-3.5 w-3.5 text-[#5A1DE6] shrink-0" />
               <span className="text-xs font-semibold text-[#5A1DE6]">AI Study Tools</span>
             </div>
-            <button
-              onClick={handleSummarize}
-              disabled={aiLoading || !lesson.body?.trim()}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#5A1DE6] text-white text-xs font-semibold hover:bg-[#4A0DD6] disabled:opacity-50 transition-colors shrink-0"
-            >
-              {aiLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-              Summarise
+            <button onClick={handleSummarize} disabled={aiLoading || !lesson.body?.trim()}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#5A1DE6] text-white text-xs font-semibold hover:bg-[#4A0DD6] disabled:opacity-50 transition-colors shrink-0">
+              {aiLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />} Summarise
             </button>
-            <button
-              onClick={() => { setQaOpen(true); setQaAnswer(""); setQaQuestion(""); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#5A1DE6]/30 text-[#5A1DE6] text-xs font-semibold hover:bg-[#5A1DE6]/5 transition-colors shrink-0"
-            >
-              <MessageSquare className="h-3 w-3" />
-              Ask AI
+            <button onClick={() => { setQaOpen(true); setQaAnswer(""); setQaQuestion(""); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#5A1DE6]/30 text-[#5A1DE6] text-xs font-semibold hover:bg-[#5A1DE6]/5 transition-colors shrink-0">
+              <MessageSquare className="h-3 w-3" /> Ask AI
             </button>
           </div>
 
           {lesson.body && lesson.body.trim() && (
-            <section>
-              <LessonBody body={lesson.body} />
-            </section>
+            <section><LessonBody body={lesson.body} /></section>
           )}
 
-          {/* AI Summary Dialog */}
-          <Dialog open={summaryOpen} onOpenChange={setSummaryOpen}>
-            <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-[#5A1DE6]" /> AI Lesson Summary
-                </DialogTitle>
-              </DialogHeader>
-              {aiLoading ? (
-                <div className="flex flex-col items-center justify-center py-10 gap-3">
-                  <Loader2 className="h-8 w-8 animate-spin text-[#5A1DE6]" />
-                  <p className="text-sm text-muted-foreground">Generating summary…</p>
-                </div>
-              ) : aiSummary ? (
-                <div className="space-y-4 text-sm">
-                  <div className="p-4 bg-muted/50 rounded-xl">
-                    <p className="font-semibold text-foreground mb-1.5">Overview</p>
-                    <p className="text-muted-foreground leading-relaxed">{aiSummary.overview}</p>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground mb-2">Key Takeaways</p>
-                    <ul className="space-y-2">
-                      {aiSummary.keyTakeaways.map((t, i) => (
-                        <li key={i} className="flex items-start gap-2.5 text-muted-foreground">
-                          <span className="mt-0.5 h-5 w-5 rounded-full bg-[#5A1DE6] text-white text-[10px] flex items-center justify-center shrink-0 font-bold">{i + 1}</span>
-                          {t}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="p-3.5 bg-amber-50 rounded-xl border border-amber-200">
-                    <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wider mb-1.5">Think about this</p>
-                    <p className="text-foreground text-sm leading-relaxed">{aiSummary.followUpQuestion}</p>
-                  </div>
-                </div>
-              ) : null}
-            </DialogContent>
-          </Dialog>
-
-          {/* AI Q&A Dialog */}
-          <Dialog open={qaOpen} onOpenChange={setQaOpen}>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-[#5A1DE6]" /> Ask AI about this lesson
-                </DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleAskAI} className="space-y-3">
-                <p className="text-xs text-muted-foreground">Ask anything about the lesson — the AI has read the full content.</p>
-                <input
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#5A1DE6]/30 placeholder:text-muted-foreground"
-                  placeholder="e.g. Can you explain the main concept in simpler terms?"
-                  value={qaQuestion}
-                  onChange={(e) => setQaQuestion(e.target.value)}
-                  autoFocus
-                />
-                <button
-                  type="submit"
-                  disabled={qaLoading || !qaQuestion.trim()}
-                  className="w-full h-10 rounded-full bg-[#5A1DE6] text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2 hover:bg-[#4A0DD6] transition-colors"
-                >
-                  {qaLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                  {qaLoading ? "Thinking…" : "Ask"}
-                </button>
-                {qaAnswer && (
-                  <div className="rounded-xl bg-muted/60 border border-border p-4 text-sm text-foreground leading-relaxed whitespace-pre-wrap">
-                    {qaAnswer}
-                  </div>
-                )}
-              </form>
-            </DialogContent>
-          </Dialog>
-
           {lesson.attachmentUrl && (
-            <a
-              href={lesson.attachmentUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2.5 p-4 bg-white border border-border rounded-xl hover:border-[#5A1DE6]/40 transition-colors group"
-            >
+            <a href={lesson.attachmentUrl} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-2.5 p-4 bg-white border border-border rounded-xl hover:border-[#5A1DE6]/40 transition-colors group">
               <div className="h-10 w-10 rounded-lg bg-[#5A1DE6]/10 text-[#5A1DE6] flex items-center justify-center shrink-0">
                 <Paperclip className="h-5 w-5" />
               </div>
@@ -420,8 +353,117 @@ export default function LessonViewPage() {
               <p className="text-sm">This lesson has no content yet.</p>
             </div>
           )}
+
+          {/* Mark as Complete button (students only) */}
+          {!isCreator && (
+            <div className="pt-2">
+              {isCompleted ? (
+                <div className="flex flex-col items-center gap-3 p-6 bg-emerald-50 border border-emerald-200 rounded-2xl text-center">
+                  <CheckCircle2 className="h-10 w-10 text-emerald-500" />
+                  <div>
+                    <p className="font-bold text-emerald-800">Lesson Complete!</p>
+                    <p className="text-sm text-emerald-600 mt-0.5">
+                      {progress ? `${progress.completed} of ${progress.total} lessons done` : ""}
+                    </p>
+                  </div>
+                  {progress?.courseComplete ? (
+                    <Link href={`/groups/${groupId}/certificate`}>
+                      <button className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-yellow-400 to-amber-500 text-white font-bold text-sm shadow-md hover:opacity-90 transition-all">
+                        <Award className="h-4 w-4" /> View Certificate
+                      </button>
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={() => unmarkComplete.mutate()} disabled={unmarkComplete.isPending}
+                      className="text-xs text-emerald-600 hover:text-emerald-800 underline transition-colors">
+                      {unmarkComplete.isPending ? "Undoing..." : "Undo"}
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={() => markComplete.mutate()}
+                  disabled={markComplete.isPending}
+                  className="w-full flex items-center justify-center gap-2.5 h-14 rounded-2xl bg-gradient-to-r from-[#5A1DE6] to-[#3A0CA3] text-white font-bold text-[16px] shadow-lg shadow-[#5A1DE6]/20 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-60"
+                >
+                  {markComplete.isPending
+                    ? <Loader2 className="h-5 w-5 animate-spin" />
+                    : <Circle className="h-5 w-5" />}
+                  Mark as Complete
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
+
+      {/* AI Summary Dialog */}
+      <Dialog open={summaryOpen} onOpenChange={setSummaryOpen}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-[#5A1DE6]" /> AI Lesson Summary
+            </DialogTitle>
+          </DialogHeader>
+          {aiLoading ? (
+            <div className="flex flex-col items-center justify-center py-10 gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-[#5A1DE6]" />
+              <p className="text-sm text-muted-foreground">Generating summary…</p>
+            </div>
+          ) : aiSummary ? (
+            <div className="space-y-4 text-sm">
+              <div className="p-4 bg-muted/50 rounded-xl">
+                <p className="font-semibold text-foreground mb-1.5">Overview</p>
+                <p className="text-muted-foreground leading-relaxed">{aiSummary.overview}</p>
+              </div>
+              <div>
+                <p className="font-semibold text-foreground mb-2">Key Takeaways</p>
+                <ul className="space-y-2">
+                  {aiSummary.keyTakeaways.map((t, i) => (
+                    <li key={i} className="flex items-start gap-2.5 text-muted-foreground">
+                      <span className="mt-0.5 h-5 w-5 rounded-full bg-[#5A1DE6] text-white text-[10px] flex items-center justify-center shrink-0 font-bold">{i + 1}</span>
+                      {t}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="p-3.5 bg-amber-50 rounded-xl border border-amber-200">
+                <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wider mb-1.5">Think about this</p>
+                <p className="text-foreground text-sm leading-relaxed">{aiSummary.followUpQuestion}</p>
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Q&A Dialog */}
+      <Dialog open={qaOpen} onOpenChange={setQaOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 text-[#5A1DE6]" /> Ask AI about this lesson
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAskAI} className="space-y-3">
+            <p className="text-xs text-muted-foreground">Ask anything about the lesson — the AI has read the full content.</p>
+            <input
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#5A1DE6]/30 placeholder:text-muted-foreground"
+              placeholder="e.g. Can you explain the main concept in simpler terms?"
+              value={qaQuestion} onChange={(e) => setQaQuestion(e.target.value)} autoFocus
+            />
+            <button type="submit" disabled={qaLoading || !qaQuestion.trim()}
+              className="w-full h-10 rounded-full bg-[#5A1DE6] text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2 hover:bg-[#4A0DD6] transition-colors">
+              {qaLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {qaLoading ? "Thinking…" : "Ask"}
+            </button>
+            {qaAnswer && (
+              <div className="rounded-xl bg-muted/60 border border-border p-4 text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                {qaAnswer}
+              </div>
+            )}
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Prev / Next nav */}
       {(prev || next) && (

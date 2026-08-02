@@ -30,6 +30,7 @@ export default function LessonEditPage() {
   const [videoUrl, setVideoUrl] = useState("");
   const [attachmentUrl, setAttachmentUrl] = useState("");
   const [isPublished, setIsPublished] = useState(true);
+  const [publishAt, setPublishAt] = useState(""); // ISO datetime-local string
   const [hydrated, setHydrated] = useState(isNew); // new lessons start hydrated
 
   const { data: existingLesson, isLoading } = useQuery<{ lesson: Lesson }>({
@@ -47,6 +48,14 @@ export default function LessonEditPage() {
       setVideoUrl(l.videoUrl ?? "");
       setAttachmentUrl(l.attachmentUrl ?? "");
       setIsPublished(l.isPublished);
+      if ((l as any).publishAt) {
+        // Convert stored UTC ISO string → local datetime-local value
+        const d = new Date((l as any).publishAt);
+        const pad = (n: number) => String(n).padStart(2, "0");
+        setPublishAt(
+          `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+        );
+      }
       setHydrated(true);
     }
   }, [existingLesson, hydrated]);
@@ -115,6 +124,7 @@ export default function LessonEditPage() {
       videoUrl: videoUrl.trim() || null,
       attachmentUrl: attachmentUrl.trim() || null,
       isPublished,
+      publishAt: publishAt ? new Date(publishAt).toISOString() : null,
     };
     if (isNew) createLesson.mutate(payload);
     else updateLesson.mutate(payload);
@@ -243,6 +253,33 @@ export default function LessonEditPage() {
             onCheckedChange={setIsPublished}
             className="data-[state=checked]:bg-emerald-500"
           />
+        </section>
+
+        {/* Drip scheduling */}
+        <section className="p-4 bg-card border border-border rounded-2xl space-y-3">
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-lg bg-[#5A1DE6]/10 flex items-center justify-center shrink-0">
+              <span className="text-sm">⏰</span>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">Schedule Release</p>
+              <p className="text-[11px] text-muted-foreground">
+                Set a future date to auto-release this lesson (drip). Leave empty for instant access.
+              </p>
+            </div>
+          </div>
+          <input
+            type="datetime-local"
+            value={publishAt}
+            onChange={(e) => setPublishAt(e.target.value)}
+            className="w-full h-11 rounded-xl border border-border/60 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-[#5A1DE6]/30"
+          />
+          {publishAt && (
+            <button type="button" onClick={() => setPublishAt("")}
+              className="text-xs text-muted-foreground hover:text-destructive transition-colors underline">
+              Clear schedule (release immediately)
+            </button>
+          )}
         </section>
 
         <p className="text-[12px] text-muted-foreground pt-1">

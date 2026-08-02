@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db, messagesTable, usersTable, groupMembersTable, groupsTable } from "@workspace/db";
 import { eq, and, desc } from "drizzle-orm";
+import type { Request } from "express";
 import { getAuth } from "@clerk/express";
 import {
   SendMessageBody,
@@ -112,6 +113,84 @@ router.post("/messages", async (req, res): Promise<void> => {
   // Fire-and-forget: broadcast to everyone subscribed to this group.
   void broadcast(groupChannel(msg.groupId), "message:new", payload);
   res.status(201).json(payload);
+});
+
+/**
+ * POST /groups/:groupId/messages/:messageId/pin
+ * Pin a message as an announcement (creator only). Unpins any previous pin first.
+ */
+router.post("/groups/:groupId/messages/:messageId/pin", async (req, res): Promise<void> => {
+  const authedUserId = await getAuthedUserId(req);
+  if (!authedUserId) { res.status(401).json({ error: "Not authenticated" }); return; }
+
+  const groupId = Number(req.params.groupId);
+  const messageId = Number(req.params.messageId);
+  if (!Number.isFinite(groupId) || !Number.isFinite(messageId)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const [group] = await db
+    .select({ creatorId: groupsTable.creatorId })
+    .from(groupsTable)
+    .where(eq(groupsTable.id, groupId))
+    .limit(1);
+
+  if (!group) { res.status(404).json({ error: "Group not found" }); return; }
+  if (group.creatorId !== authedUserId) { res.status(403).json({ error: "Only the creator can pin messages." }); return; }
+
+  // Unpin all existing pins in this group, then pin the selected message
+  await db
+    .update(messagesTable)
+    .set({ isPinned: false })
+    .where(eq(messagesTable.groupId, groupId));
+
+  const [pinned] = await db
+    .update(messagesTable)
+    .set({ isPinned: true })
+    .where(and(eq(messagesTable.id, messageId), eq(messagesTable.groupId, groupId)))
+    .returning();
+
+  if (!pinned) { res.status(404).json({ error: "Message not found" }); return; }
+  void broadcast(groupChannel(groupId), "message:pinned", { messageId });
+  res.json({ ok: true, messageId });
+});
+
+/**
+ * DELETE /groups/:groupId/pin
+ * Unpin the current pinned message (creator only).
+ */
+router.delete("/groups/:groupId/pin", async (req, res): Promise<void> => {
+  const authedUserId = await getAuthedUserId(req);
+  if (!authedUserId) { res.status(401).json({ error: "Not authenticated" }); return; }
+
+  const groupId = Number(req.params.groupId);
+  const [group] = await db.select({ creatorId: groupsTable.creatorId }).from(groupsTable).where(eq(groupsTable.id, groupId)).limit(1);
+  if (!group || group.creatorId !== authedUserId) { res.status(403).json({ error: "Only the creator can unpin." }); return; }
+
+  await db.update(messagesTable).set({ isPinned: false }).where(eq(messagesTable.groupId, groupId));
+  void broadcast(groupChannel(groupId), "message:pinned", { messageId: null });
+  res.json({ ok: true });
+});
+
+/**
+ * GET /groups/:groupId/pinned
+ * Get the currently pinned message for this group (if any).
+ */
+router.get("/groups/:groupId/pinned", async (req, res): Promise<void> => {
+  const groupId = Number(req.params.groupId);
+  if (!Number.isFinite(groupId)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const [msg] = await db
+    .select({
+      id: messagesTable.id,
+      content: messagesTable.content,
+      createdAt: messagesTable.createdAt,
+      senderName: usersTable.name,
+    })
+    .from(messagesTable)
+    .innerJoin(usersTable, eq(messagesTable.senderId, usersTable.id))
+    .where(and(eq(messagesTable.groupId, groupId), eq(messagesTable.isPinned, true)))
+    .limit(1);
+
+  res.json({ pinned: msg ?? null });
 });
 
 router.delete("/messages/:id", async (req, res): Promise<void> => {

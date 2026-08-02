@@ -1,6 +1,7 @@
 import { useGetGroup, useGetGroupStats, useListMessages, useSendMessage, useDeleteMessage, useReplicateLecture, useListGroups, useGetCurrentUser, getListMessagesQueryKey, getListReplicationJobsQueryKey, useListGroupMembers, customFetch } from "@workspace/api-client-react";
 import { useParams, Link, useLocation } from "wouter";
-import { ArrowLeft, Send, Sparkles, Image as ImageIcon, Trash2, Copy, Loader2, Smile, Mic, Plus, Camera, ChevronDown, CheckCheck, Check } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, Send, Sparkles, Trash2, Copy, Loader2, Smile, Mic, Plus, Camera, ChevronDown, CheckCheck, Pin, X } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { getPusher, groupChannelName } from "@/lib/pusher";
 import type { Channel } from "pusher-js";
@@ -81,6 +82,36 @@ export default function ChatViewPage() {
   const [targetGroupIds, setTargetGroupIds] = useState<number[]>([]);
   const [reactions, setReactions] = useState<Record<number, string[]>>({});
   const [showScrollDown, setShowScrollDown] = useState(false);
+
+  // Pinned announcement
+  type PinnedMsg = { id: number; content: string; createdAt: string; senderName: string } | null;
+  const { data: pinnedData, refetch: refetchPinned } = useQuery<{ pinned: PinnedMsg }>({
+    queryKey: ["pinned", groupId],
+    queryFn: () => customFetch<{ pinned: PinnedMsg }>(`/api/groups/${groupId}/pinned`, { method: "GET" }),
+    enabled: !!groupId,
+  });
+  const pinned = pinnedData?.pinned ?? null;
+  const [pinnedDismissed, setPinnedDismissed] = useState(false);
+
+  const handlePin = async (messageId: number) => {
+    try {
+      await customFetch(`/api/groups/${groupId}/messages/${messageId}/pin`, { method: "POST" });
+      refetchPinned();
+      toast({ title: "Message pinned as announcement" });
+    } catch {
+      toast({ title: "Could not pin message", variant: "destructive" });
+    }
+  };
+
+  const handleUnpin = async () => {
+    try {
+      await customFetch(`/api/groups/${groupId}/pin`, { method: "DELETE" });
+      refetchPinned();
+      setPinnedDismissed(false);
+    } catch {
+      toast({ title: "Could not unpin", variant: "destructive" });
+    }
+  };
 
   // AI Study Assistant state
   const [aiOpen, setAiOpen] = useState(false);
@@ -366,6 +397,25 @@ export default function ChatViewPage() {
         </div>
       </header>
 
+      {/* Pinned announcement banner */}
+      {pinned && !pinnedDismissed && (
+        <div className="shrink-0 mx-3 mt-2 flex items-start gap-2.5 px-3.5 py-2.5 bg-amber-50 border border-amber-200 rounded-xl z-20 relative">
+          <Pin className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-0.5">Pinned by {pinned.senderName}</p>
+            <p className="text-sm text-amber-900 leading-snug line-clamp-2">{pinned.content}</p>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            {isCreator && (
+              <button onClick={handleUnpin} className="text-[10px] text-amber-600 font-semibold hover:text-amber-900 transition-colors">Unpin</button>
+            )}
+            <button onClick={() => setPinnedDismissed(true)} className="p-0.5 text-amber-500 hover:text-amber-900 transition-colors">
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3 relative z-10 pb-20">
         {isLoadingMessages ? (
           <div className="flex justify-center p-4">
@@ -437,9 +487,14 @@ export default function ChatViewPage() {
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
                           {isCreator && (
-                            <button type="button" onClick={() => setReplicateMessageId(msg.id)} className="h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-[#5A1DE6] hover:bg-[#5A1DE6]/10 transition-all" title="Replicate">
-                              <Copy className="h-3.5 w-3.5" />
-                            </button>
+                            <>
+                              <button type="button" onClick={() => setReplicateMessageId(msg.id)} className="h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-[#5A1DE6] hover:bg-[#5A1DE6]/10 transition-all" title="Replicate">
+                                <Copy className="h-3.5 w-3.5" />
+                              </button>
+                              <button type="button" onClick={() => handlePin(msg.id)} className="h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-amber-600 hover:bg-amber-50 transition-all" title="Pin as announcement">
+                                <Pin className="h-3.5 w-3.5" />
+                              </button>
+                            </>
                           )}
                         </>
                       )}

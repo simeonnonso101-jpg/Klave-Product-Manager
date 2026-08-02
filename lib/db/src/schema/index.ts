@@ -6,3 +6,4 @@ export * from "./payments";
 export * from "./transactions";
 export * from "./replicationJobs";
 export * from "./lessons";
+export * from "./lessonCompletions";

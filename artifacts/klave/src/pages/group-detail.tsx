@@ -1,7 +1,7 @@
 import { useGetGroup, useGetGroupStats, useListGroupMembers, useGetCurrentUser, useCreatePayment, useAddGroupMember, useUpdateGroup, useListUsers, getGetGroupQueryKey, getListGroupMembersQueryKey, getListGroupsQueryKey, customFetch } from "@workspace/api-client-react";
 import { useParams, Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Users, ShieldCheck, CreditCard, Settings, Loader2, UserPlus, MessageCircle, BookOpen, Plus, PlayCircle, Lock } from "lucide-react";
+import { ArrowLeft, Users, ShieldCheck, CreditCard, Settings, Loader2, UserPlus, MessageCircle, BookOpen, Plus, PlayCircle, Lock, Clock, Award, BarChart2, CheckCircle2, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -47,8 +47,14 @@ export default function GroupDetailPage() {
     price: "",
   });
 
-  type Lesson = { id: number; title: string; position: number; isPublished: boolean; videoUrl: string | null };
-  type LessonsResp = { lessons: Lesson[]; isPreview: boolean; total: number };
+  type Lesson = {
+    id: number; title: string; position: number; isPublished: boolean;
+    videoUrl: string | null; publishAt: string | null; isCompleted: boolean;
+  };
+  type LessonsResp = {
+    lessons: Lesson[]; upcoming: Lesson[]; isPreview: boolean;
+    total: number; completedIds: number[];
+  };
 
   const { data: lessonsData } = useQuery<LessonsResp>({
     queryKey: ["lessons", groupId],
@@ -57,8 +63,28 @@ export default function GroupDetailPage() {
     retry: false,
   });
 
+  type Progress = { completed: number; total: number; completedIds: number[]; courseComplete: boolean };
+  const { data: progress } = useQuery<Progress>({
+    queryKey: ["progress", groupId],
+    queryFn: () => customFetch<Progress>(`/api/groups/${groupId}/progress`, { method: "GET" }),
+    enabled: !!groupId && !!user?.id,
+    retry: false,
+  });
+
+  type AnalyticsLesson = { id: number; title: string; position: number; completions: number; completionRate: number };
+  type Analytics = { lessons: AnalyticsLesson[]; totalMembers: number };
   const isMember = members?.some(m => m.userId === user?.id);
   const isCreator = user?.id === group?.creatorId;
+
+  const { data: analytics } = useQuery<Analytics>({
+    queryKey: ["analytics", groupId],
+    queryFn: () => customFetch<Analytics>(`/api/groups/${groupId}/analytics`, { method: "GET" }),
+    enabled: !!groupId && isCreator,
+    retry: false,
+  });
+
+  const progressPct = progress && progress.total > 0
+    ? Math.round((progress.completed / progress.total) * 100) : 0;
 
   // Fetch student's wallet balance so we can offer "Pay from wallet" option
   const { data: walletSummary } = useQuery<{ availableBalance: number }>({
@@ -272,12 +298,46 @@ export default function GroupDetailPage() {
           </div>
         )}
 
+        {/* Student progress bar */}
+        {isMember && !isCreator && progress && progress.total > 0 && (
+          <div className="bg-card border border-border rounded-2xl p-4 space-y-2.5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-[#5A1DE6]" />
+                <span className="text-sm font-bold text-foreground">Your Progress</span>
+              </div>
+              <span className="text-sm font-bold text-[#5A1DE6]">{progressPct}%</span>
+            </div>
+            <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-[#5A1DE6] to-[#3A0CA3] rounded-full transition-all duration-700"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">{progress.completed} of {progress.total} lessons complete</span>
+              {progress.courseComplete && (
+                <Link href={`/groups/${groupId}/certificate`}>
+                  <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-400 to-amber-500 text-white text-xs font-bold shadow hover:opacity-90 transition-all">
+                    <Award className="h-3 w-3" /> Get Certificate
+                  </button>
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+
         {isCreator && (
           <Card className="bg-primary/5 border-primary/20 shadow-sm rounded-2xl">
             <CardContent className="p-5 flex gap-4">
               <div className="flex-1">
                 <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider mb-1">Revenue</p>
-                <p className="text-[22px] font-bold text-primary">${stats?.totalRevenue?.toLocaleString() || 0}</p>
+                <p className="text-[22px] font-bold text-primary">₦{stats?.totalRevenue?.toLocaleString() || 0}</p>
+              </div>
+              <div className="w-px bg-border/50"></div>
+              <div className="flex-1">
+                <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider mb-1">Members</p>
+                <p className="text-[22px] font-bold text-foreground">{group.memberCount}</p>
               </div>
               <div className="w-px bg-border/50"></div>
               <div className="flex-1">
@@ -336,20 +396,33 @@ export default function GroupDetailPage() {
                 isMember || isCreator ? (
                   <Link key={lesson.id} href={`/groups/${groupId}/lessons/${lesson.id}`} className="block">
                     <div className="flex items-center gap-3 p-4 hover:bg-muted/40 transition-colors">
-                      <div className="h-9 w-9 rounded-xl bg-[#5A1DE6]/10 text-[#5A1DE6] flex items-center justify-center shrink-0 text-sm font-bold">
-                        {lesson.videoUrl
+                      <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 text-sm font-bold ${
+                        lesson.isCompleted
+                          ? "bg-emerald-100 text-emerald-600"
+                          : "bg-[#5A1DE6]/10 text-[#5A1DE6]"
+                      }`}>
+                        {lesson.isCompleted
+                          ? <CheckCircle2 className="h-4 w-4" />
+                          : lesson.videoUrl
                           ? <PlayCircle className="h-4 w-4" />
                           : <span>{idx + 1}</span>}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[15px] font-semibold text-foreground truncate leading-tight">{lesson.title}</p>
+                        <p className={`text-[15px] font-semibold truncate leading-tight ${
+                          lesson.isCompleted ? "text-muted-foreground line-through-[0.5px]" : "text-foreground"
+                        }`}>{lesson.title}</p>
                         {!lesson.isPublished && (
                           <p className="text-[11px] text-amber-600 font-medium">Hidden</p>
                         )}
                       </div>
-                      {lesson.videoUrl && (
-                        <Badge variant="outline" className="text-[10px] shrink-0 border-[#5A1DE6]/30 text-[#5A1DE6]">Video</Badge>
-                      )}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {lesson.videoUrl && (
+                          <Badge variant="outline" className="text-[10px] border-[#5A1DE6]/30 text-[#5A1DE6]">Video</Badge>
+                        )}
+                        {lesson.isCompleted && (
+                          <Badge className="text-[10px] bg-emerald-100 text-emerald-700 border-none">Done</Badge>
+                        )}
+                      </div>
                     </div>
                   </Link>
                 ) : (
@@ -361,6 +434,25 @@ export default function GroupDetailPage() {
                   </div>
                 )
               ))}
+
+              {/* Drip / upcoming lessons */}
+              {(isMember || isCreator) && lessonsData.upcoming && lessonsData.upcoming.length > 0 && (
+                lessonsData.upcoming.map(lesson => (
+                  <div key={lesson.id} className="flex items-center gap-3 p-4 opacity-70">
+                    <div className="h-9 w-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                      <Clock className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[15px] font-semibold text-foreground truncate leading-tight">{lesson.title}</p>
+                      <p className="text-[11px] text-amber-600 font-medium">
+                        Available {lesson.publishAt ? new Date(lesson.publishAt).toLocaleDateString("en-NG", { month: "short", day: "numeric" }) : "soon"}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] border-amber-300 text-amber-600 shrink-0">Upcoming</Badge>
+                  </div>
+                ))
+              )}
+
               {lessonsData.isPreview && lessonsData.total > lessonsData.lessons.length && (
                 <div className="p-4 text-center">
                   <p className="text-sm text-muted-foreground">
@@ -371,6 +463,36 @@ export default function GroupDetailPage() {
             </div>
           )}
         </section>
+
+        {/* Creator analytics section */}
+        {isCreator && analytics && analytics.lessons.length > 0 && (
+          <section className="space-y-3">
+            <h3 className="font-semibold text-lg flex items-center gap-2 px-1 text-foreground">
+              <BarChart2 className="h-5 w-5 text-muted-foreground" /> Lesson Engagement
+            </h3>
+            <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
+              <div className="px-4 py-3 bg-muted/40 border-b border-border flex items-center justify-between">
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Lesson</span>
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Completions</span>
+              </div>
+              {analytics.lessons.map((l) => (
+                <div key={l.id} className="px-4 py-3 border-b border-border/60 last:border-0">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-sm font-semibold text-foreground truncate flex-1 mr-4">{l.title}</p>
+                    <span className="text-sm font-bold text-[#5A1DE6] shrink-0">{l.completions}/{analytics.totalMembers}</span>
+                  </div>
+                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-[#5A1DE6] to-[#3A0CA3] rounded-full transition-all duration-500"
+                      style={{ width: `${l.completionRate}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1">{l.completionRate}% completion rate</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section className="grid grid-cols-2 gap-3">
           <div className="bg-card border border-border shadow-sm p-4 rounded-2xl flex items-start gap-3">

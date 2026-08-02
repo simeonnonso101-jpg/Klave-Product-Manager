@@ -26,6 +26,7 @@ const PeoplePage = lazy(() => import("@/pages/people"));
 const LessonViewPage = lazy(() => import("@/pages/lesson-view"));
 const LessonEditPage = lazy(() => import("@/pages/lesson-edit"));
 const PaystackCallbackPage = lazy(() => import("@/pages/paystack-callback"));
+const CertificatePage = lazy(() => import("@/pages/certificate"));
 
 function PageSkeleton() {
   return (
@@ -270,6 +271,7 @@ function ClerkProviderWithRoutes() {
               <Route path="/groups" component={() => <Protected><GroupsPage /></Protected>} />
               <Route path="/groups/new" component={() => <Protected><CreateGroupPage /></Protected>} />
               <Route path="/paystack/callback" component={PaystackCallbackPage} />
+              <Route path="/groups/:id/certificate" component={() => <Protected><CertificatePage /></Protected>} />
               <Route path="/groups/:id/lessons/new" component={() => <Protected><LessonEditPage /></Protected>} />
               <Route path="/groups/:id/lessons/:lessonId/edit" component={() => <Protected><LessonEditPage /></Protected>} />
               <Route path="/groups/:id/lessons/:lessonId" component={() => <Protected><LessonViewPage /></Protected>} />
